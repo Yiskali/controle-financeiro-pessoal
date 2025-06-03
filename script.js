@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextMonthBtn = document.getElementById('nextMonth');
     const addMonthBtn = document.getElementById('addMonth');
     const exportDataBtn = document.getElementById('exportData');
+    const importDataInput = document.getElementById('importDataInput');
+    const importDataButton = document.getElementById('importDataButton');
+    const tabButtons = document.querySelectorAll('.tab-button');
 
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -1147,8 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Exportar Dados ---
-
+   // --- Exportar Dados ---
     exportDataBtn.addEventListener('click', () => {
         const dataStr = JSON.stringify(allMonthsData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
@@ -1161,6 +1163,96 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         alert('Dados exportados com sucesso!');
+    });
+
+    // --- Importar Dados (NOVA FUNCIONALIDADE) ---
+
+    // Quando o botão visível é clicado, dispara o clique no input de arquivo oculto
+    importDataButton.addEventListener('click', () => {
+        importDataInput.click();
+    });
+
+    // Quando um arquivo é selecionado no input
+    importDataInput.addEventListener('change', (event) => {
+        const file = event.target.files[0]; // Pega o primeiro arquivo selecionado
+        if (!file) {
+            alert('Nenhum arquivo selecionado.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+
+                // --- Validação básica da estrutura (MUITO IMPORTANTE!) ---
+                // Verifica se o objeto importado tem as chaves esperadas para meses
+                const hasValidStructure = Object.keys(importedData).every(monthKey => {
+                    const monthData = importedData[monthKey];
+                    return typeof monthData === 'object' &&
+                           monthData.hasOwnProperty('fixedExpenses') &&
+                           monthData.hasOwnProperty('monthlyExpenses') &&
+                           monthData.hasOwnProperty('income') &&
+                           monthData.hasOwnProperty('installments') &&
+                           monthData.hasOwnProperty('categories') &&
+                           monthData.hasOwnProperty('paymentMethods');
+                });
+
+                if (!hasValidStructure) {
+                    alert('Erro: O arquivo JSON não parece ter a estrutura de dados esperada do seu controle financeiro.');
+                    return;
+                }
+
+                // --- Lógica de Mesclagem/Substituição ---
+                // Pergunte ao usuário se ele quer substituir ou mesclar
+                showConfirmModal('Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**', (shouldReplace) => {
+                    if (shouldReplace) {
+                        // Substitui todos os dados
+                        allMonthsData = importedData;
+                        currentMonthKey = Object.keys(allMonthsData).sort()[0]; // Define o primeiro mês como o atual
+                        alert('Dados substituídos com sucesso!');
+                    } else {
+                        // Mescla: adiciona novos meses e sobrescreve meses existentes se houver conflito
+                        let newMonthsAdded = 0;
+                        let monthsUpdated = 0;
+
+                        for (const monthKey in importedData) {
+                            if (allMonthsData.hasOwnProperty(monthKey)) {
+                                // Mês já existe, sobrescreve.
+                                // Podemos refinar isso para mesclar item por item se necessário,
+                                // mas por simplicidade, sobrescreve o mês inteiro.
+                                allMonthsData[monthKey] = importedData[monthKey];
+                                monthsUpdated++;
+                            } else {
+                                // Mês não existe, adiciona.
+                                allMonthsData[monthKey] = importedData[monthKey];
+                                newMonthsAdded++;
+                            }
+                        }
+                        alert(`Dados mesclados com sucesso! ${newMonthsAdded} meses novos adicionados, ${monthsUpdated} meses atualizados.`);
+                    }
+
+                    // --- Finalização ---
+                    saveData();
+                    updateMonthSelect();
+                    renderCurrentMonthData(); // Renderiza com os novos dados
+                    // Opcionalmente, forçar a migração de fixos/parcelas caso os dados importados não estejam totalmente atualizados
+                    // migrateFixedExpenses();
+                    // migrateInstallments();
+                });
+
+            } catch (e) {
+                alert('Erro ao ler o arquivo JSON. Certifique-se de que é um JSON válido: ' + e.message);
+                console.error('Erro ao importar JSON:', e);
+            }
+        };
+
+        reader.onerror = () => {
+            alert('Erro ao ler o arquivo.');
+        };
+
+        reader.readAsText(file); // Lê o arquivo como texto
     });
 
 
