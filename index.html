@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Pessoal</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header">
+        <h1>Controle Financeiro Mensal</h1>
+        <div class="month-navigation">
+            <button id="prevMonth">Anterior</button>
+            <select id="monthSelect"></select>
+            <button id="nextMonth">Próximo</button>
+            <button id="addMonth">Adicionar Mês</button>
+        </div>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-button active" data-tab="summary">Resumo</button>
+        <button class="tab-button" data-tab="fixed-expenses">Fixos</button>
+        <button class="tab-button" data-tab="monthly-expenses">Gastos do Mês</button>
+        <button class="tab-button" data-tab="income">Entradas</button>
+        <button class="tab-button" data-tab="installments">Compras Parceladas</button>
+        <button class="tab-button" data-tab="chart">Gráfico</button>
+    </nav>
+
+    <main class="container">
+        <section id="summary" class="tab-content active">
+            <div class="main-summary-cards">
+                <div class="card" style="background-color: #A9A515;">
+                    <h3>Total de Entradas</h3>
+                    <p id="totalIncomeSummary">R$ 0,00</p>
+                </div>
+                <div class="card" style="background-color: #5F744A;">
+                    <h3>Total de Saídas</h3>
+                    <p id="totalExpensesSummary">R$ 0,00</p>
+                </div>
+                <div class="card" style="background-color: #A78C74;">
+                    <h3>Saldo Atual</h3>
+                    <p id="currentBalanceSummary" class="balance-positive">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="secondary-summary-cards">
+                <div class="card">
+                    <h3>Total Regular</h3>
+                    <p id="totalRegularSummary">R$ 0,00</p>
+                </div>
+                <div class="card">
+                    <h3>Total Vales</h3>
+                    <p id="totalVouchersSummary">R$ 0,00</p>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h2>Classificação por Categoria</h2>
+                <table id="categorySummaryTable">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Expectativa</th>
+                            <th>Gasto Real</th>
+                            <th>% do Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="summary-section">
+                <h2>Totais por Forma de Pagamento</h2>
+                <table id="paymentMethodSummaryTable">
+                    <thead>
+                        <tr>
+                            <th>Forma de Pagamento</th>
+                            <th>Total Gasto</th>
+                            <th>Saldo Disponível</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="fixed-expenses" class="tab-content">
+            <h2>Gastos Fixos</h2>
+            <button class="add-button" data-modal="fixedExpenseModal">Adicionar Gasto Fixo</button>
+            <table id="fixedExpensesTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Forma de Pagamento</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <section id="monthly-expenses" class="tab-content">
+            <h2>Gastos do Mês</h2>
+            <button class="add-button" data-modal="monthlyExpenseModal">Adicionar Gasto</button>
+            <table id="monthlyExpensesTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Forma de Pagamento</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <section id="income" class="tab-content">
+            <h2>Entradas</h2>
+            <button class="add-button" data-modal="incomeModal">Adicionar Entrada</button>
+            <table id="incomeTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <section id="installments" class="tab-content">
+            <h2>Compras Parceladas</h2>
+            <button class="add-button" data-modal="installmentModal">Adicionar Compra Parcelada</button>
+            <table id="installmentsTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Parcela</th>
+                        <th>Forma de Pagamento</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <section id="chart" class="tab-content">
+            <h2>Gráfico de Gastos por Categoria</h2>
+            <div class="chart-container">
+                <canvas id="expensesChart"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <section class="quick-actions">
+        <h2>Ações Rápidas</h2>
+        <div class="action-buttons">
+            <button data-modal="categoryModal">Gerenciar Categorias</button>
+            <button data-modal="paymentMethodModal">Gerenciar Formas de Pagamento</button>
+            <button id="exportData">Exportar Dados</button>
+        </div>
+    </section>
+
+    <div id="fixedExpenseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Adicionar/Editar Gasto Fixo</h2>
+            <form id="fixedExpenseForm">
+                <input type="hidden" id="fixedExpenseId">
+                <label for="fixedExpenseName">Nome:</label>
+                <input type="text" id="fixedExpenseName" required>
+                <label for="fixedExpenseDate">Data:</label>
+                <input type="date" id="fixedExpenseDate" required>
+                <label for="fixedExpensePaymentMethod">Forma de Pagamento:</label>
+                <select id="fixedExpensePaymentMethod" required></select>
+                <label for="fixedExpenseCategory">Categoria:</label>
+                <select id="fixedExpenseCategory" required></select>
+                <label for="fixedExpenseValue">Valor:</label>
+                <input type="number" id="fixedExpenseValue" step="0.01" required>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="monthlyExpenseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Adicionar/Editar Gasto do Mês</h2>
+            <form id="monthlyExpenseForm">
+                <input type="hidden" id="monthlyExpenseId">
+                <label for="monthlyExpenseName">Nome:</label>
+                <input type="text" id="monthlyExpenseName" required>
+                <label for="monthlyExpenseDate">Data:</label>
+                <input type="date" id="monthlyExpenseDate" required>
+                <label for="monthlyExpensePaymentMethod">Forma de Pagamento:</label>
+                <select id="monthlyExpensePaymentMethod" required></select>
+                <label for="monthlyExpenseCategory">Categoria:</label>
+                <select id="monthlyExpenseCategory" required></select>
+                <label for="monthlyExpenseValue">Valor:</label>
+                <input type="number" id="monthlyExpenseValue" step="0.01" required>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="incomeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Adicionar/Editar Entrada</h2>
+            <form id="incomeForm">
+                <input type="hidden" id="incomeId">
+                <label for="incomeName">Nome:</label>
+                <input type="text" id="incomeName" required>
+                <label for="incomeDate">Data:</label>
+                <input type="date" id="incomeDate" required>
+                <label for="incomeCategory">Categoria:</label>
+                <select id="incomeCategory" required></select>
+                <label for="incomeValue">Valor:</label>
+                <input type="number" id="incomeValue" step="0.01" required>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="installmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Adicionar/Editar Compra Parcelada</h2>
+            <form id="installmentForm">
+                <input type="hidden" id="installmentId">
+                <label for="installmentName">Nome:</label>
+                <input type="text" id="installmentName" required>
+                <label for="installmentDate">Data da Primeira Parcela:</label>
+                <input type="date" id="installmentDate" required>
+                <label for="installmentTotal">Total de Parcelas:</label>
+                <input type="number" id="installmentTotal" min="1" required>
+                <label for="installmentPaymentMethod">Forma de Pagamento:</label>
+                <select id="installmentPaymentMethod" required></select>
+                <label for="installmentCategory">Categoria:</label>
+                <select id="installmentCategory" required></select>
+                <label for="installmentValue">Valor por Parcela:</label>
+                <input type="number" id="installmentValue" step="0.01" required>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Gerenciar Categorias</h2>
+            <form id="categoryForm">
+                <input type="hidden" id="categoryId">
+                <label for="categoryName">Nome:</label>
+                <input type="text" id="categoryName" required>
+                <label for="categoryColor">Cor:</label>
+                <input type="color" id="categoryColor" value="#cccccc">
+                <label for="categoryType">Tipo:</label>
+                <select id="categoryType">
+                    <option value="expense">Despesa</option>
+                    <option value="income">Receita</option>
+                </select>
+                <div id="expectedExpenseDiv" style="display: none;">
+                    <label for="categoryExpectedExpense">Expectativa de Gasto:</label>
+                    <input type="number" id="categoryExpectedExpense" step="0.01">
+                </div>
+                <button type="submit">Adicionar/Atualizar Categoria</button>
+            </form>
+            <h3>Categorias Existentes:</h3>
+            <ul id="categoryList"></ul>
+        </div>
+    </div>
+
+    <div id="paymentMethodModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Gerenciar Formas de Pagamento</h2>
+            <form id="paymentMethodForm">
+                <input type="hidden" id="paymentMethodId">
+                <label for="paymentMethodName">Nome:</label>
+                <input type="text" id="paymentMethodName" required>
+                <div id="initialBalanceDiv" style="display: none;">
+                    <label for="paymentMethodInitialBalance">Saldo Inicial (para vales):</label>
+                    <input type="number" id="paymentMethodInitialBalance" step="0.01">
+                </div>
+                <button type="submit">Adicionar/Atualizar Forma de Pagamento</button>
+            </form>
+            <h3>Formas de Pagamento Existentes:</h3>
+            <ul id="paymentMethodList"></ul>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <p id="confirmMessage"></p>
+            <button id="confirmYes">Sim</button>
+            <button id="confirmNo">Não</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
