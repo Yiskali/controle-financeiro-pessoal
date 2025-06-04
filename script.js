@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const importDataButton = document.getElementById('importDataButton');
     const tabButtons = document.querySelectorAll('.tab-button');
 
-    const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
 
     // Resumo
