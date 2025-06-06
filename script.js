@@ -217,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
     });
 
+
     addMonthBtn.addEventListener('click', () => {
         const today = new Date();
         let year = today.getFullYear();
@@ -233,24 +234,31 @@ document.addEventListener('DOMContentLoaded', () => {
             newMonthKey = `${year}-${String(month).padStart(2, '0')}`;
         } while (allMonthsData[newMonthKey]);
 
-        // MENSAGEM DE CONFIRMAÇÃO ATUALIZADA AQUI:
+        // MENSAGEM DE CONFIRMAÇÃO
         const confirmCopy = confirm("Deseja copiar dados (exceto parcelas, que migram automaticamente) do mês atual para o novo mês?");
-        const currentMonthData = getCurrentMonthData();
 
-        allMonthsData[newMonthKey] = {
-            fixedExpenses: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.fixedExpenses.map(exp => ({ ...exp })))) : [],
-            monthlyExpenses: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
-            income: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.income.map(inc => ({ ...inc })))) : [],
-            installments: [], // Parcelas não são copiadas diretamente ao criar um novo mês, elas migram
-            categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [], // Sempre copia categorias
-            paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : [] // Sempre copia formas de pagamento
-        };
+        // APENAS PROSSEGUE SE O USUÁRIO CLICAR EM "OK" (confirmCopy é true)
+        if (confirmCopy) { // <-- NOVA CONDIÇÃO AQUI
+            const currentMonthData = getCurrentMonthData();
 
-        currentMonthKey = newMonthKey;
-        saveData();
-        updateMonthSelect();
-        renderCurrentMonthData();
-        alert(`Mês ${new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long' })} / ${year} adicionado com sucesso!`);
+            allMonthsData[newMonthKey] = {
+                fixedExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.fixedExpenses.map(exp => ({ ...exp })))) : [],
+                monthlyExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
+                income: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.income.map(inc => ({ ...inc })))) : [],
+                installments: [], // Parcelas não são copiadas diretamente ao criar um novo mês, elas migram
+                categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [], // Sempre copia categorias
+                paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : [] // Sempre copia formas de pagamento
+            };
+
+            currentMonthKey = newMonthKey;
+            saveData();
+            updateMonthSelect();
+            renderCurrentMonthData();
+            alert(`Mês ${new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long' })} / ${year} adicionado com sucesso!`);
+        } else {
+            // Opcional: Se o usuário cancelar, você pode adicionar um console.log
+            console.log("Criação de novo mês cancelada pelo usuário.");
+        }
     });
 
     // --- Funções de Modais ---
