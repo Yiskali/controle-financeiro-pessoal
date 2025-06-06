@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportDataBtn = document.getElementById('exportData');
     const importDataInput = document.getElementById('importDataInput');
     const importDataButton = document.getElementById('importDataButton');
-    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabButtons = document.querySelectorAll('.tab-button'); // Única declaração para tabButtons
     const tabContents = document.querySelectorAll('.tab-content');
 
     // Resumo
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fixedExpenses: [],
                 monthlyExpenses: [],
                 income: [],
-                installments: [],
+                installments: [], // Parcelas não são copiadas aqui, elas migram
                 categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
                 paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
             };
@@ -233,14 +233,15 @@ document.addEventListener('DOMContentLoaded', () => {
             newMonthKey = `${year}-${String(month).padStart(2, '0')}`;
         } while (allMonthsData[newMonthKey]);
 
-        const confirmCopy = confirm("Deseja copiar dados (exceto parcelas e status 'pago') do mês atual para o novo mês?");
+        // MENSAGEM DE CONFIRMAÇÃO ATUALIZADA AQUI:
+        const confirmCopy = confirm("Deseja copiar dados (exceto parcelas, que migram automaticamente) do mês atual para o novo mês?");
         const currentMonthData = getCurrentMonthData();
 
         allMonthsData[newMonthKey] = {
             fixedExpenses: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.fixedExpenses.map(exp => ({ ...exp })))) : [],
             monthlyExpenses: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
             income: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.income.map(inc => ({ ...inc })))) : [],
-            installments: [], // Parcelas sempre migram, nunca são copiadas diretamente aqui
+            installments: [], // Parcelas não são copiadas diretamente ao criar um novo mês, elas migram
             categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [], // Sempre copia categorias
             paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : [] // Sempre copia formas de pagamento
         };
@@ -327,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) {
                         document.getElementById('paymentMethodId').value = item.id;
                         document.getElementById('paymentMethodName').value = item.name;
-                        if (item.isVoucher) {
+                        if (pm.isVoucher) { // Usar pm.isVoucher para verificar
                             initialBalanceDiv.style.display = 'block';
                             document.getElementById('paymentMethodInitialBalance').value = item.initialBalance || '';
                         } else {
@@ -446,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allExpenses.forEach(exp => {
             const paymentMethod = currentMonthData.paymentMethods.find(pm => pm.id === exp.paymentMethodId);
-            // Verifica se é um vale pelo nome do método de pagamento (contém "vale")
+            // Verifica se é um vale pelo nome do método de pagamento (contém "vale" ou "ticket")
             if (paymentMethod && paymentMethod.isVoucher) {
                 totalVouchers += exp.value || exp.valuePerInstallment;
             } else {
@@ -866,20 +867,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const categoryId = document.getElementById('installmentCategory').value;
         const valuePerInstallment = parseFloat(document.getElementById('installmentValue').value);
 
+        // Ao adicionar uma nova parcela, ela deve ser tratada como a primeira no mês de origem.
+        // As migrações subsequentes cuidarão de propagá-la.
         const currentMonthData = getCurrentMonthData();
 
         if (id) {
+            // Edição de parcela existente: apenas atualiza os detalhes da parcela na sua origem
+            // A migração de parcelas irá re-propagar com base nas alterações
             const index = currentMonthData.installments.findIndex(inst => inst.id === id);
             if (index !== -1) {
-                // Ao editar uma parcela, atualizamos os dados para o mês atual.
-                // A migração de parcelas irá garantir a consistência nos próximos meses.
                 currentMonthData.installments[index] = {
                     ...currentMonthData.installments[index],
                     name,
+                    // originalDate e totalInstallments não são alterados diretamente aqui
                     paymentMethodId,
                     categoryId,
-                    valuePerInstallment,
-                    // originalDate e totalInstallments são de referência e não devem mudar em uma parcela migrada
+                    valuePerInstallment
                 };
             }
         } else {
@@ -887,9 +890,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const newInstallment = {
                 id: generateId(),
                 name,
-                originalDate,
-                currentDate: originalDate,
-                currentInstallment: 1,
+                originalDate, // Data de início da primeira parcela
+                currentDate: originalDate, // Para o mês de origem, current é igual a original
+                currentInstallment: 1, // Sempre começa como a primeira parcela
                 totalInstallments: totalInstallments,
                 paymentMethodId,
                 categoryId,
@@ -899,7 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMonthData.installments.push(newInstallment);
         }
         saveData();
-        renderCurrentMonthData();
+        renderCurrentMonthData(); // Isso disparará migrateInstallments() e renderizará
         closeModal(document.getElementById('installmentModal'));
     });
 
@@ -1039,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- Funções de Migração de Dados ---
+    // --- Funções de Migração de Dados (Aprimorada para parcelas) ---
 
     const migrateFixedExpenses = () => {
         const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
@@ -1060,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Adiciona gastos fixos do mês atual para o próximo se ainda não existirem lá
                 currentMonthData.fixedExpenses.forEach(fixedExp => {
                     if (!nextMonthData.fixedExpenses.some(exp => exp.id === fixedExp.id)) {
-                        nextMonthData.fixedExpenses.push({ ...fixedExp }); // Copia sem a propriedade 'paid'
+                        nextMonthData.fixedExpenses.push({ ...fixedExp });
                     }
                 });
             }
@@ -1068,65 +1071,87 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const migrateInstallments = () => {
-        const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
+        // 1. Coletar todas as "parcelas originais" (o primeiro registro de cada compra parcelada)
+        // Isso é importante para evitar que parcelas já migradas gerem novas cadeias
+        const allOriginalInstallmentSources = new Map(); // Map<id_original_parcela, objeto_parcela_original>
+
+        Object.values(allMonthsData).forEach(monthData => {
+            monthData.installments.forEach(inst => {
+                // Considera uma parcela como "original" se for a primeira parcela de uma série
+                // e a data da parcela (currentDate) é a mesma da data original (originalDate).
+                // Isso filtra parcelas que já foram migradas.
+                if (inst.currentInstallment === 1 && inst.currentDate === inst.originalDate) {
+                    allOriginalInstallmentSources.set(inst.id, { ...inst, status: 'Ativa' }); // Garante o status inicial
+                }
+            });
+        });
+
+        // 2. Limpar todas as listas de parcelas em *todos* os meses antes de repopular
+        // Isso é crucial para evitar duplicatas e dados desatualizados
+        Object.keys(allMonthsData).forEach(monthKey => {
+            allMonthsData[monthKey].installments = [];
+        });
+
+        // 3. Gerar e distribuir as parcelas para os meses corretos
+        const sortedMonthsKeys = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
             const [yearB, monthB] = b.split('-').map(Number);
             if (yearA !== yearB) return yearA - yearB;
             return monthA - monthB;
         });
 
-        const now = new Date();
-        const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        allOriginalInstallmentSources.forEach(originalInst => {
+            const originalDate = new Date(originalInst.originalDate);
 
-        // Itera sobre todos os meses para garantir que as parcelas sejam atualizadas e propagadas
-        for (let i = 0; i < sortedMonths.length; i++) {
-            const monthKey = sortedMonths[i];
-            const monthData = allMonthsData[monthKey];
+            // Iterar sobre todos os meses que temos no sistema (ordenados)
+            sortedMonthsKeys.forEach(monthKey => {
+                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1); // 1º dia do mês
 
-            if (!monthData) continue;
-
-            const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1);
-
-            monthData.installments = monthData.installments.map(inst => {
-                // Se a parcela já está finalizada, mantém como está
-                if (inst.status === 'Finalizada') {
-                    return inst;
-                }
-
-                const originalDate = new Date(inst.originalDate);
+                // Calcula a diferença de meses entre o mês original e o mês atual na iteração
                 const diffMonths = (monthDate.getFullYear() - originalDate.getFullYear()) * 12 +
                                    (monthDate.getMonth() - originalDate.getMonth());
 
-                const newCurrentInstallment = inst.currentInstallment + diffMonths;
-
-                if (newCurrentInstallment > inst.totalInstallments) {
-                    return { ...inst, status: 'Finalizada' };
-                } else {
-                    // Atualiza a data da parcela para o mês atual, mantendo o dia original se possível
-                    let newDay = originalDate.getDate();
-                    const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
-                    if (newDay > daysInMonth) {
-                        newDay = daysInMonth; // Ajusta para o último dia do mês se o dia original for maior
-                    }
-                    const newDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), newDay).toISOString().split('T')[0];
-
-                    return {
-                        ...inst,
-                        currentInstallment: newCurrentInstallment,
-                        currentDate: newDate,
-                        status: 'Ativa'
-                    };
+                // Se o mês atual é anterior ao mês da parcela original, pular
+                if (diffMonths < 0) {
+                    return; // Continua para o próximo mês
                 }
-            }).filter(inst => inst.status !== 'Finalizada' || (inst.status === 'Finalizada' && inst.currentInstallment > 0)); // Mantém parcelas finalizadas que já foram registradas
 
-            // Remove duplicatas que podem ter sido criadas por algum erro
-            const seen = new Set();
-            monthData.installments = monthData.installments.filter(item => {
-                const duplicate = seen.has(item.id);
-                seen.add(item.id);
-                return !duplicate;
+                // Calcula o número da parcela para o mês atual
+                const newCurrentInstallment = 1 + diffMonths;
+
+                // Verifica se a parcela já finalizou
+                if (newCurrentInstallment > originalInst.totalInstallments) {
+                    // Se finalizou, não adiciona mais a este mês nem aos futuros
+                    return; // Sai desta iteração para a parcela atual
+                }
+
+                // Calcula a data para o mês atual, mantendo o dia original se possível
+                let newDay = originalDate.getDate();
+                const daysInCurrentMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+                if (newDay > daysInCurrentMonth) {
+                    newDay = daysInCurrentMonth; // Ajusta para o último dia do mês se o dia original for maior
+                }
+                const newDateFormatted = new Date(monthDate.getFullYear(), monthDate.getMonth(), newDay).toISOString().split('T')[0];
+
+                const migratedInstallment = {
+                    ...originalInst, // Copia todas as propriedades originais
+                    currentInstallment: newCurrentInstallment,
+                    currentDate: newDateFormatted,
+                    status: 'Ativa' // Garante que está ativa se ainda não finalizou
+                };
+
+                // Adiciona a parcela atualizada ao mês correspondente, se ainda não existir
+                if (!allMonthsData[monthKey].installments.some(inst => inst.id === migratedInstallment.id)) {
+                    allMonthsData[monthKey].installments.push(migratedInstallment);
+                }
             });
-        }
+        });
+
+        // Opcional: Re-ordenar as parcelas dentro de cada mês se necessário (pela data)
+        Object.keys(allMonthsData).forEach(monthKey => {
+            allMonthsData[monthKey].installments.sort((a, b) => new Date(a.currentDate) - new Date(b.currentDate));
+        });
+
         saveData();
     };
 
@@ -1148,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-   // --- Exportar Dados ---
+    // --- Exportar Dados ---
     exportDataBtn.addEventListener('click', () => {
         const dataStr = JSON.stringify(allMonthsData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
@@ -1163,8 +1188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Dados exportados com sucesso!');
     });
 
-    // --- Importar Dados (NOVA FUNCIONALIDADE) ---
-
+    // --- Importar Dados ---
     // Quando o botão visível é clicado, dispara o clique no input de arquivo oculto
     importDataButton.addEventListener('click', () => {
         importDataInput.click();
@@ -1218,8 +1242,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (const monthKey in importedData) {
                             if (allMonthsData.hasOwnProperty(monthKey)) {
                                 // Mês já existe, sobrescreve.
-                                // Podemos refinar isso para mesclar item por item se necessário,
-                                // mas por simplicidade, sobrescreve o mês inteiro.
                                 allMonthsData[monthKey] = importedData[monthKey];
                                 monthsUpdated++;
                             } else {
@@ -1235,9 +1257,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveData();
                     updateMonthSelect();
                     renderCurrentMonthData(); // Renderiza com os novos dados
-                    // Opcionalmente, forçar a migração de fixos/parcelas caso os dados importados não estejam totalmente atualizados
-                    // migrateFixedExpenses();
-                    // migrateInstallments();
                 });
 
             } catch (e) {
@@ -1260,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadData();
         // A ordem é importante: primeiro migra fixos e parcelas, depois renderiza
         migrateFixedExpenses();
-        migrateInstallments();
+        migrateInstallments(); // Essencial para parcelas migrarem para o mês atual/novos meses
         updateMonthSelect();
         renderCurrentMonthData();
 
