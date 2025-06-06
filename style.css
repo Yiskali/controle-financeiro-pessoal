@@ -11,7 +11,7 @@
     --terracotta: #A0522D;
     --olive-green: #808000;
     --beige: #DAD0B5;
-    --warm sand: #d4b484;
+    --warm-sand: #d4b484;
     --dark-text: #333;
     --light-text: #fff;
     --table-header-bg: #C76542; /* Usando a cor do header para cabeçalhos de tabela */
@@ -83,7 +83,7 @@ body {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    background-color: var(--light-gray);
+    background-color: var(--warm-sand);
     padding: 10px 0;
     border-bottom: 1px solid #ddd;
 }
@@ -117,7 +117,7 @@ body {
 
 .tab-content {
     display: none;
-    background-color: var(--light-gray);
+    background-color: var(--warm-sand);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -358,7 +358,7 @@ table td button:hover {
     text-align: center;
     margin-top: 40px;
     padding: 20px;
-    background-color: var(--light-gray);
+    background-color: var(--warm-sand);
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
