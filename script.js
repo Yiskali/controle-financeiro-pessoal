@@ -1024,13 +1024,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (canDelete) {
+                    // Se for categoria ou forma de pagamento, remove de todos os meses, pois são globais
                     if (type === 'category' || type === 'paymentMethod') {
-                        // Remove de todos os meses, pois são globais
                         Object.values(allMonthsData).forEach(monthData => {
                             monthData[type === 'category' ? 'categories' : 'paymentMethods'] = monthData[type === 'category' ? 'categories' : 'paymentMethods'].filter(item => item.id !== id);
                         });
-                    } else {
-                        // Remove apenas do mês atual
+                        // Se for uma parcela, é preciso remover a "raiz" dela de todos os meses também
+                    } else if (type === 'installments') {
+                         Object.values(allMonthsData).forEach(monthData => {
+                            monthData.installments = monthData.installments.filter(item => item.id !== id);
+                         });
+                    }
+                    else {
+                        // Remove apenas do mês atual para outros tipos de despesa/receita
                         currentMonthData[type] = currentMonthData[type].filter(item => item.id !== id);
                     }
                     saveData();
@@ -1072,27 +1078,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const migrateInstallments = () => {
         // 1. Coletar todas as "parcelas originais" (o primeiro registro de cada compra parcelada)
-        // Isso é importante para evitar que parcelas já migradas gerem novas cadeias
-        const allOriginalInstallmentSources = new Map(); // Map<id_original_parcela, objeto_parcela_original>
+        // Usamos um Map para garantir que cada ID de parcela seja única e pegamos a versão mais "original" (primeira data).
+        const masterInstallmentDefinitions = new Map(); // Map<id_da_parcela, objeto_parcela_original>
 
+        // Percorre todos os meses para encontrar a "definição" mais antiga/original de cada parcela.
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
-                // Considera uma parcela como "original" se for a primeira parcela de uma série
-                // e a data da parcela (currentDate) é a mesma da data original (originalDate).
-                // Isso filtra parcelas que já foram migradas.
-                if (inst.currentInstallment === 1 && inst.currentDate === inst.originalDate) {
-                    allOriginalInstallmentSources.set(inst.id, { ...inst, status: 'Ativa' }); // Garante o status inicial
+                if (!masterInstallmentDefinitions.has(inst.id)) {
+                    // Se é a primeira vez que vemos este ID, adicionamos
+                    masterInstallmentDefinitions.set(inst.id, {
+                        id: inst.id,
+                        name: inst.name,
+                        originalDate: inst.originalDate,
+                        totalInstallments: inst.totalInstallments,
+                        paymentMethodId: inst.paymentMethodId,
+                        categoryId: inst.categoryId,
+                        valuePerInstallment: inst.valuePerInstallment
+                    });
+                } else {
+                    // Se já existe, verifica se a data original encontrada agora é mais antiga
+                    const existingMaster = masterInstallmentDefinitions.get(inst.id);
+                    if (new Date(inst.originalDate) < new Date(existingMaster.originalDate)) {
+                        masterInstallmentDefinitions.set(inst.id, {
+                            id: inst.id,
+                            name: inst.name,
+                            originalDate: inst.originalDate,
+                            totalInstallments: inst.totalInstallments,
+                            paymentMethodId: inst.paymentMethodId,
+                            categoryId: inst.categoryId,
+                            valuePerInstallment: inst.valuePerInstallment
+                        });
+                    }
                 }
             });
         });
 
-        // 2. Limpar todas as listas de parcelas em *todos* os meses antes de repopular
-        // Isso é crucial para evitar duplicatas e dados desatualizados
+        // 2. Limpar todas as listas de parcelas em *todos* os meses antes de repopular.
+        // Isso é CRUCIAL para evitar duplicatas e garantir que as parcelas sejam geradas a partir do zero
+        // sempre que a função de migração for chamada.
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].installments = [];
         });
 
-        // 3. Gerar e distribuir as parcelas para os meses corretos
+        // 3. Gerar e distribuir as parcelas para os meses corretos com base nas definições mestras.
         const sortedMonthsKeys = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
             const [yearB, monthB] = b.split('-').map(Number);
@@ -1100,8 +1128,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return monthA - monthB;
         });
 
-        allOriginalInstallmentSources.forEach(originalInst => {
-            const originalDate = new Date(originalInst.originalDate);
+        masterInstallmentDefinitions.forEach(masterInst => {
+            const originalDate = new Date(masterInst.originalDate);
 
             // Iterar sobre todos os meses que temos no sistema (ordenados)
             sortedMonthsKeys.forEach(monthKey => {
@@ -1111,43 +1139,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diffMonths = (monthDate.getFullYear() - originalDate.getFullYear()) * 12 +
                                    (monthDate.getMonth() - originalDate.getMonth());
 
-                // Se o mês atual é anterior ao mês da parcela original, pular
+                // Se o mês atual é anterior ao mês da parcela original (ou o mesmo),
+                // e a parcela já finalizou (ex: uma parcela finalizada em um mês anterior),
+                // ou se o diffMonths é negativo (mês anterior ao original), então pulamos.
                 if (diffMonths < 0) {
-                    return; // Continua para o próximo mês
+                     return;
                 }
 
                 // Calcula o número da parcela para o mês atual
-                const newCurrentInstallment = 1 + diffMonths;
+                const currentInstallmentNumber = 1 + diffMonths; // 1 + 0 para o primeiro mês, 1 + 1 para o segundo etc.
 
-                // Verifica se a parcela já finalizou
-                if (newCurrentInstallment > originalInst.totalInstallments) {
+                // Verifica se a parcela já finalizou sua série completa
+                if (currentInstallmentNumber > masterInst.totalInstallments) {
                     // Se finalizou, não adiciona mais a este mês nem aos futuros
-                    return; // Sai desta iteração para a parcela atual
+                    return;
                 }
 
-                // Calcula a data para o mês atual, mantendo o dia original se possível
+                // Calcula a data específica para esta parcela neste mês, mantendo o dia original se possível.
+                // Isso garante que, se a parcela começou no dia 15, ela continue no dia 15 nos meses seguintes.
                 let newDay = originalDate.getDate();
-                const daysInCurrentMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+                const daysInCurrentMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate(); // Último dia do mês atual
                 if (newDay > daysInCurrentMonth) {
                     newDay = daysInCurrentMonth; // Ajusta para o último dia do mês se o dia original for maior
                 }
-                const newDateFormatted = new Date(monthDate.getFullYear(), monthDate.getMonth(), newDay).toISOString().split('T')[0];
+                const newDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), newDay);
+                const newDateFormatted = newDate.toISOString().split('T')[0];
 
-                const migratedInstallment = {
-                    ...originalInst, // Copia todas as propriedades originais
-                    currentInstallment: newCurrentInstallment,
-                    currentDate: newDateFormatted,
-                    status: 'Ativa' // Garante que está ativa se ainda não finalizou
+                const newInstallmentEntry = {
+                    id: masterInst.id, // Mantém o ID original para todas as parcelas da série
+                    name: masterInst.name,
+                    originalDate: masterInst.originalDate, // Data original da primeira parcela
+                    currentDate: newDateFormatted, // Data específica desta parcela neste mês
+                    currentInstallment: currentInstallmentNumber,
+                    totalInstallments: masterInst.totalInstallments,
+                    paymentMethodId: masterInst.paymentMethodId,
+                    categoryId: masterInst.categoryId,
+                    valuePerInstallment: masterInst.valuePerInstallment,
+                    status: 'Ativa' // Sempre ativa até que o currentInstallmentNumber > totalInstallments
                 };
 
-                // Adiciona a parcela atualizada ao mês correspondente, se ainda não existir
-                if (!allMonthsData[monthKey].installments.some(inst => inst.id === migratedInstallment.id)) {
-                    allMonthsData[monthKey].installments.push(migratedInstallment);
-                }
+                // Adiciona a parcela gerada ao array de parcelas do mês correspondente
+                // Não é necessário verificar duplicatas aqui pois o array do mês foi limpo antes
+                allMonthsData[monthKey].installments.push(newInstallmentEntry);
             });
         });
 
-        // Opcional: Re-ordenar as parcelas dentro de cada mês se necessário (pela data)
+        // Opcional: Reordenar as parcelas dentro de cada mês se necessário (pela data)
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].installments.sort((a, b) => new Date(a.currentDate) - new Date(b.currentDate));
         });
