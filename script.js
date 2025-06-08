@@ -360,11 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (idInput) idInput.value = '';
             if (modalId === 'categoryModal') {
                 expectedExpenseDiv.style.display = 'none';
-                renderCategoryList();
+                // Não chamar renderCategoryList aqui para não sobrescrever a lista no modal
             }
             if (modalId === 'paymentMethodModal') {
                 initialBalanceDiv.style.display = 'none';
-                renderPaymentMethodList();
+                // Não chamar renderPaymentMethodList aqui para não sobrescrever a lista no modal
             }
         }
     };
@@ -927,9 +927,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         saveData();
         renderCurrentMonthData();
-        renderCategoryList();
-        populateSelects();
-        closeModal(document.getElementById('categoryModal'));
+        renderCategoryList(); // Mantém a lista atualizada dentro do modal
+        populateSelects(); // Atualiza selects dos modais
+        // NÃO FECHAR O MODAL AQUI:
+        // closeModal(document.getElementById('categoryModal'));
     });
 
     paymentMethodForm.addEventListener('submit', (e) => {
@@ -952,9 +953,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         saveData();
         renderCurrentMonthData();
-        renderPaymentMethodList();
-        populateSelects();
-        closeModal(document.getElementById('paymentMethodModal'));
+        renderPaymentMethodList(); // Mantém a lista atualizada dentro do modal
+        populateSelects(); // Atualiza selects dos modais
+        // NÃO FECHAR O MODAL AQUI:
+        // closeModal(document.getElementById('paymentMethodModal'));
     });
 
     categoryTypeSelect.addEventListener('change', (e) => {
@@ -982,7 +984,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'fixedExpenses': modalId = 'fixedExpenseModal'; break;
             case 'monthlyExpenses': modalId = 'monthlyExpenseModal'; break;
             case 'income': modalId = 'incomeModal'; break;
-            case 'installments': modalId = 'installmentModal'; break; // Usar o plural para consistência
+            case 'installments': modalId = 'installmentModal'; break;
             case 'category': modalId = 'categoryModal'; break;
             case 'paymentMethod': modalId = 'paymentMethodModal'; break;
             default: return;
@@ -1024,8 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         Object.values(allMonthsData).forEach(monthData => {
                             monthData[type === 'category' ? 'categories' : 'paymentMethods'] = monthData[type === 'category' ? 'categories' : 'paymentMethods'].filter(item => item.id !== id);
                         });
-                    } else if (type === 'installments') { // AGORA AQUI É 'installments' (PLURAL)
-                        console.log(`Excluindo parcela mestre (ID: ${id}) de todos os meses.`); // Log para depuração
+                    } else if (type === 'installments') {
+                        console.log(`Excluindo parcela mestre (ID: ${id}) de todos os meses.`);
                         const initialAllMonthsLength = Object.values(allMonthsData).reduce((total, month) => total + month.installments.length, 0);
                         console.log(`Before deletion: Total installments across all months = ${initialAllMonthsLength}`);
 
@@ -1048,11 +1050,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     saveData();
                     renderCurrentMonthData();
-                    if (type === 'category') renderCategoryList();
-                    if (type === 'paymentMethod') renderPaymentMethodList();
+                    if (type === 'category') renderCategoryList(); // Re-renderiza a lista no modal de categorias
+                    if (type === 'paymentMethod') renderPaymentMethodList(); // Re-renderiza a lista no modal de formas de pagamento
                 }
             } else {
-                console.log("Confirmação recebida: NÃO. Exclusão cancelada."); // Log para depuração
+                console.log("Confirmação recebida: NÃO. Exclusão cancelada.");
             }
         });
     };
@@ -1087,9 +1089,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const migrateInstallments = () => {
         const masterInstallmentDefinitions = new Map();
 
-        // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
-        // Percorre todos os meses para encontrar a "definição" mais original de cada parcela.
-        // Garante que a originalDate usada para cálculo da diferença de meses seja a mais antiga registrada.
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
@@ -1097,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     masterInstallmentDefinitions.set(inst.id, {
                         id: inst.id,
                         name: inst.name,
-                        originalDate: inst.originalDate, // A data mais antiga para esta série
+                        originalDate: inst.originalDate,
                         totalInstallments: inst.totalInstallments,
                         paymentMethodId: inst.paymentMethodId,
                         categoryId: inst.categoryId,
@@ -1107,14 +1106,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // 2. Limpar todas as listas de parcelas em *todos* os meses antes de repopular.
-        // Isso é CRUCIAL para evitar duplicatas e garantir que as parcelas sejam geradas a partir do zero
-        // sempre que a função de migração for chamada.
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].installments = [];
         });
 
-        // 3. Gerar e distribuir as parcelas para os meses corretos com base nas definições mestras.
         const sortedMonthsKeys = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
             const [yearB, monthB] = b.split('-').map(Number);
@@ -1126,53 +1121,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalDate = new Date(masterInst.originalDate);
 
             sortedMonthsKeys.forEach(monthKey => {
-                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1); // 1º dia do mês
+                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1);
 
                 const diffMonths = (monthDate.getFullYear() - originalDate.getFullYear()) * 12 +
                                    (monthDate.getMonth() - originalDate.getMonth());
 
-                // Se o mês atual é anterior ao mês da parcela original (ou o mesmo, mas a lógica de cálculo da parcela faz isso),
-                // então pulamos para garantir que a primeira parcela só aparece a partir do mês original.
                 if (diffMonths < 0) {
                      return;
                 }
 
-                const currentInstallmentNumber = 1 + diffMonths; // 1 + 0 para o primeiro mês, 1 + 1 para o segundo etc.
+                const currentInstallmentNumber = 1 + diffMonths;
 
-                // Verifica se a parcela já finalizou sua série completa
                 if (currentInstallmentNumber > masterInst.totalInstallments) {
-                    // Se finalizou, não adiciona mais a este mês nem aos futuros
                     return;
                 }
 
-                // Calcula a data específica para esta parcela neste mês, mantendo o dia original se possível.
                 let newDay = originalDate.getDate();
-                const daysInCurrentMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate(); // Último dia do mês atual
+                const daysInCurrentMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
                 if (newDay > daysInCurrentMonth) {
-                    newDay = daysInCurrentMonth; // Ajusta para o último dia do mês se o dia original for maior
+                    newDay = daysInCurrentMonth;
                 }
                 const newDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), newDay);
                 const newDateFormatted = newDate.toISOString().split('T')[0];
 
                 const newInstallmentEntry = {
-                    id: masterInst.id, // Mantém o ID original para todas as parcelas da série
+                    id: masterInst.id,
                     name: masterInst.name,
-                    originalDate: masterInst.originalDate, // Data original da primeira parcela
-                    currentDate: newDateFormatted, // Data específica desta parcela neste mês
+                    originalDate: masterInst.originalDate,
+                    currentDate: newDateFormatted,
                     currentInstallment: currentInstallmentNumber,
                     totalInstallments: masterInst.totalInstallments,
                     paymentMethodId: masterInst.paymentMethodId,
                     categoryId: masterInst.categoryId,
                     valuePerInstallment: masterInst.valuePerInstallment,
-                    status: 'Ativa' // Sempre ativa até que o currentInstallmentNumber > totalInstallments
+                    status: 'Ativa'
                 };
 
-                // Adiciona a parcela gerada ao array de parcelas do mês correspondente
                 allMonthsData[monthKey].installments.push(newInstallmentEntry);
             });
         });
 
-        // Opcional: Reordenar as parcelas dentro de cada mês se necessário (pela data)
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].installments.sort((a, b) => new Date(a.currentDate) - new Date(b.currentDate));
         });
