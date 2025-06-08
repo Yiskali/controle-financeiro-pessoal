@@ -358,14 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
             form.reset();
             const idInput = form.querySelector('input[type="hidden"]');
             if (idInput) idInput.value = '';
-            if (modalId === 'categoryModal') {
-                expectedExpenseDiv.style.display = 'none';
-                // Não chamar renderCategoryList aqui para não sobrescrever a lista no modal
-            }
-            if (modalId === 'paymentMethodModal') {
-                initialBalanceDiv.style.display = 'none';
-                // Não chamar renderPaymentMethodList aqui para não sobrescrever a lista no modal
-            }
+            // Não chamar renderCategoryList/renderPaymentMethodList aqui
+            // A lista será atualizada após o salvamento global (em renderCurrentMonthData)
         }
     };
 
@@ -524,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </td>
                     `;
                     break;
-                case 'installments': // AQUI ESTÁ A MUDANÇA NO ONCLICK
+                case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
                         <td>${item.currentDate}</td>
@@ -535,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${item.status}</td>
                         <td>
                             <button onclick="editItem('${item.id}', 'installments')">Editar</button>
-                            <button onclick="deleteItem('${item.id}', 'installments')">Excluir</button> <!-- ALTERADO PARA 'installments' -->
+                            <button onclick="deleteItem('${item.id}', 'installments')">Excluir</button>
                         </td>
                     `;
                     break;
@@ -929,8 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         renderCategoryList(); // Mantém a lista atualizada dentro do modal
         populateSelects(); // Atualiza selects dos modais
-        // NÃO FECHAR O MODAL AQUI:
-        // closeModal(document.getElementById('categoryModal'));
+        // REMOVIDA A CHAMADA closeModal(document.getElementById('categoryModal'));
     });
 
     paymentMethodForm.addEventListener('submit', (e) => {
@@ -955,8 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         renderPaymentMethodList(); // Mantém a lista atualizada dentro do modal
         populateSelects(); // Atualiza selects dos modais
-        // NÃO FECHAR O MODAL AQUI:
-        // closeModal(document.getElementById('paymentMethodModal'));
+        // REMOVIDA A CHAMADA closeModal(document.getElementById('paymentMethodModal'));
     });
 
     categoryTypeSelect.addEventListener('change', (e) => {
@@ -1089,6 +1081,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const migrateInstallments = () => {
         const masterInstallmentDefinitions = new Map();
 
+        // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
+        // Percorre todos os meses para encontrar a "definição" mais original de cada parcela.
+        // Garante que a originalDate usada para cálculo da diferença de meses seja a mais antiga registrada.
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
@@ -1096,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     masterInstallmentDefinitions.set(inst.id, {
                         id: inst.id,
                         name: inst.name,
-                        originalDate: inst.originalDate,
+                        originalDate: inst.originalDate, // A data mais antiga para esta série
                         totalInstallments: inst.totalInstallments,
                         paymentMethodId: inst.paymentMethodId,
                         categoryId: inst.categoryId,
@@ -1106,10 +1101,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // 2. Limpar todas as listas de parcelas em *todos* os meses antes de repopular.
+        // Isso é CRUCIAL para evitar duplicatas e garantir que as parcelas sejam geradas a partir do zero
+        // sempre que a função de migração for chamada.
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].installments = [];
         });
 
+        // 3. Gerar e distribuir as parcelas para os meses corretos com base nas definições mestras.
         const sortedMonthsKeys = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
             const [yearB, monthB] = b.split('-').map(Number);
@@ -1121,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalDate = new Date(masterInst.originalDate);
 
             sortedMonthsKeys.forEach(monthKey => {
-                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1);
+                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1); // 1º dia do mês
 
                 const diffMonths = (monthDate.getFullYear() - originalDate.getFullYear()) * 12 +
                                    (monthDate.getMonth() - originalDate.getMonth());
