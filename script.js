@@ -379,12 +379,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (idInput) idInput.value = '';
             // Chamar renderCategoryList/renderPaymentMethodList aqui para atualizar a lista no modal
             if (modalId === 'categoryModal') {
-                renderCategoryList();
+                renderCategoryList(); // Re-renderiza a lista de categorias no modal
                 expectedExpenseDiv.style.display = 'none'; // Esconde a expectativa ao resetar
                 document.getElementById('categoryExpectedExpense').value = ''; // Limpa o valor
             }
             if (modalId === 'paymentMethodModal') {
-                renderPaymentMethodList();
+                renderPaymentMethodList(); // Re-renderiza a lista de formas de pagamento no modal
                 initialBalanceDiv.style.display = 'none'; // Esconde o saldo ao resetar
                 document.getElementById('paymentMethodInitialBalance').value = ''; // Limpa o valor
             }
@@ -1080,14 +1080,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- Funções de Migração de Dados (Aprimorada para parcelas) ---
+    // --- Funções de Migração de Dados (AGORA NO ESCOPO GLOBAL) ---
 
+    // **MOVIDA PARA CÁ**
     const migrateFixedExpenses = () => {
+        const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
+            const [yearA, monthA] = a.split('-').map(Number);
+            const [yearB, monthB] = b.split('-').map(Number);
+            if (yearA !== yearB) return yearA - yearB;
+            return monthA - monthB;
+        });
+
+        for (let i = 0; i < sortedMonths.length - 1; i++) {
+            const currentMonthKey = sortedMonths[i];
+            const nextMonthKey = sortedMonths[i + 1];
+
+            const currentMonthData = allMonthsData[currentMonthKey];
+            const nextMonthData = allMonthsData[nextMonthKey];
+
+            if (currentMonthData && nextMonthData) {
+                currentMonthData.fixedExpenses.forEach(fixedExp => {
+                    if (!nextMonthData.fixedExpenses.some(exp => exp.id === fixedExp.id)) {
+                        nextMonthData.fixedExpenses.push({ ...fixedExp });
+                    }
+                });
+            }
+        }
+    };
+
+    // **MOVIDA PARA CÁ**
+    const migrateInstallments = () => {
         const masterInstallmentDefinitions = new Map();
 
         // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
-        // Percorre todos os meses para encontrar a "definição" mais original de cada parcela.
-        // Garante que a originalDate usada para cálculo da diferença de meses seja a mais antiga registrada.
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
@@ -1095,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     masterInstallmentDefinitions.set(inst.id, {
                         id: inst.id,
                         name: inst.name,
-                        originalDate: inst.originalDate, // A data mais antiga para esta série
+                        originalDate: inst.originalDate,
                         totalInstallments: inst.totalInstallments,
                         paymentMethodId: inst.paymentMethodId,
                         categoryId: inst.categoryId,
@@ -1106,8 +1131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // 2. Limpar todas as listas de parcelas em *todos* os meses antes de repopular.
-        // Isso é CRUCIAL para evitar duplicatas e garantir que as parcelas sejam geradas a partir do zero
-        // sempre que a função de migração for chamada.
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].installments = [];
         });
@@ -1124,7 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalDate = new Date(masterInst.originalDate);
 
             sortedMonthsKeys.forEach(monthKey => {
-                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1); // 1º dia do mês
+                const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1);
 
                 const diffMonths = (monthDate.getFullYear() - originalDate.getFullYear()) * 12 +
                                    (monthDate.getMonth() - originalDate.getMonth());
@@ -1281,6 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const initializeApp = () => {
         loadData();
+        // Garantindo que as funções de migração estejam definidas ANTES de serem chamadas
         migrateFixedExpenses();
         migrateInstallments();
         updateMonthSelect();
