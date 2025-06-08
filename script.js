@@ -801,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentMonthData = getCurrentMonthData();
         renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
-        renderTable(currentScope.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
+        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
         renderTable(currentMonthData.income, incomeTableBody, 'income');
         renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
         renderSummary();
