@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
     const addButtons = document.querySelectorAll('.add-button');
-    const quickActionButtons = document.querySelectorAll('.action-actions button'); // Corrigido de .action-buttons para .action-actions se for este o problema
+    const quickActionButtons = document.querySelectorAll('.action-buttons button');
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
