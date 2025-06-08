@@ -46,7 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    const monthlyExpenseCategorySelect = document = document.getElementById('monthlyExpenseCategory');
+    // CORREÇÃO CRÍTICA AQUI: Removido 'document ='
+    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
     const incomeCategorySelect = document.getElementById('incomeCategory');
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
@@ -1298,19 +1299,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-      // --- Funções de Migração de Dados ---
-const migrateFixedExpenses = () => { ... }
+    // --- Inicialização da Aplicação ---
 
-const migrateInstallments = () => { ... }
+    const initializeApp = () => {
+        loadData();
+        migrateFixedExpenses();
+        migrateInstallments();
+        updateMonthSelect();
+        renderCurrentMonthData();
 
-// --- Inicialização da Aplicação ---
-const initializeApp = () => {
-    loadData();
-    migrateFixedExpenses();
-    migrateInstallments();
-    updateMonthSelect();
-    renderCurrentMonthData();
-    document.querySelector('.tab-button[data-tab="summary"]').click();
-};
+        document.querySelector('.tab-button[data-tab="summary"]').click();
+    };
 
-initializeApp();
+    initializeApp();
+});
