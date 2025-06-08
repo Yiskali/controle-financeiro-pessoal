@@ -1300,18 +1300,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // --- Inicialização da Aplicação ---
+   // --- Funções de Migração de Dados ---
+const migrateFixedExpenses = () => { ... }
 
-    const initializeApp = () => {
-        loadData();
-        // Garantindo que as funções de migração estejam definidas ANTES de serem chamadas
-        migrateFixedExpenses();
-        migrateInstallments();
-        updateMonthSelect();
-        renderCurrentMonthData();
+const migrateInstallments = () => { ... }
 
-        document.querySelector('.tab-button[data-tab="summary"]').click();
-    };
+// --- Inicialização da Aplicação ---
+const initializeApp = () => {
+    loadData();
+    migrateFixedExpenses();
+    migrateInstallments();
+    updateMonthSelect();
+    renderCurrentMonthData();
+    document.querySelector('.tab-button[data-tab="summary"]').click();
+};
 
-    initializeApp();
-});
+initializeApp();
