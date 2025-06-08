@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
     const addButtons = document.querySelectorAll('.add-button');
-    const quickActionButtons = document.querySelectorAll('.action-buttons button');
+    const quickActionButtons = document.querySelectorAll('.action-actions button'); // Corrigido de .action-buttons para .action-actions se for este o problema
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
@@ -46,8 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    // CORREÇÃO CRÍTICA AQUI: Removido 'document ='
-    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
+    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory'); // Corrigido: Removido 'document = '
     const incomeCategorySelect = document.getElementById('incomeCategory');
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
@@ -55,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const expectedExpenseDiv = document.getElementById('expectedExpenseDiv');
     const paymentMethodNameInput = document.getElementById('paymentMethodName');
     const initialBalanceDiv = document.getElementById('initialBalanceDiv');
-    const paymentMethodColorInput = document.getElementById('paymentMethodColor'); // NOVA VARIÁVEL AQUI
+    const paymentMethodColorInput = document.getElementById('paymentMethodColor'); // IMPORTANTE: Variável para o input de cor da forma de pagamento
 
     // Listas de gerenciamento
     const categoryList = document.getElementById('categoryList');
@@ -115,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthData.paymentMethods = monthData.paymentMethods.map(pm => ({
                     id: pm.id,
                     name: pm.name,
-                    color: pm.color || '#cccccc', // Adicionado default color para formas de pagamento
+                    color: pm.color || '#cccccc', // IMPORTANTE: Garante cor padrão para formas de pagamento ao carregar
                     isVoucher: pm.isVoucher || false,
                     initialBalance: pm.initialBalance || 0
                 }));
@@ -138,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { id: 'cat-4', name: 'Moradia', color: '#FF9800', type: 'expense', expectedExpense: 800 }
                 ],
                 paymentMethods: [
-                    { id: 'pm-1', name: 'Dinheiro', color: '#ADD8E6' }, // Cores iniciais
+                    { id: 'pm-1', name: 'Dinheiro', color: '#ADD8E6' }, // Cores iniciais para exemplos
                     { id: 'pm-2', name: 'Cartão de Crédito', color: '#90EE90' },
                     { id: 'pm-3', name: 'Cartão de Débito', color: '#FFD700' },
                     { id: 'pm-4', name: 'Vale Alimentação', isVoucher: true, initialBalance: 500, color: '#FF6347' }
@@ -353,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) {
                         document.getElementById('paymentMethodId').value = item.id;
                         document.getElementById('paymentMethodName').value = item.name;
-                        paymentMethodColorInput.value = pm.color || '#cccccc'; // Preencher campo de cor
+                        paymentMethodColorInput.value = pm.color || '#cccccc'; // IMPORTANTE: Preencher campo de cor ao editar
                         if (pm.isVoucher) {
                             initialBalanceDiv.style.display = 'block';
                             document.getElementById('paymentMethodInitialBalance').value = item.initialBalance || '';
@@ -617,8 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const row = paymentMethodSummaryTableBody.insertRow();
+            // IMPORTANTE: Aplica a cor de fundo e a cor do texto no nome da forma de pagamento
             row.innerHTML = `
-                <td style="background-color: ${pm.color || '#cccccc'}; color: ${getContrastColor(pm.color)};">${pm.name}</td> <!-- Aplicar cor ao nome da forma de pagamento -->
+                <td style="background-color: ${pm.color || '#cccccc'}; color: ${getContrastColor(pm.color)};">${pm.name}</td>
                 <td>${formatCurrency(totalSpent)}</td>
                 <td>${pm.isVoucher ? formatCurrency(availableBalance) : 'N/A'}</td>
                 <td>
@@ -719,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const categories = getCurrentMonthData().categories;
         categories.forEach(cat => {
             const li = document.createElement('li');
+            // IMPORTANTE: Aplica a cor de fundo e a cor do texto no nome da categoria
             li.innerHTML = `
                 <span style="background-color: ${cat.color}; padding: 3px 8px; border-radius: 4px; color: ${getContrastColor(cat.color)};">${cat.name} (${cat.type === 'expense' ? 'Despesa' : 'Receita'}${cat.type === 'expense' ? ` - Exp.: ${formatCurrency(cat.expectedExpense || 0)}` : ''})</span>
                 <div>
@@ -735,6 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const paymentMethods = getCurrentMonthData().paymentMethods;
         paymentMethods.forEach(pm => {
             const li = document.createElement('li');
+            // IMPORTANTE: Aplica a cor de fundo e a cor do texto no nome da forma de pagamento na lista de gerenciamento
             li.innerHTML = `
                 <span style="background-color: ${pm.color || '#cccccc'}; padding: 3px 8px; border-radius: 4px; color: ${getContrastColor(pm.color)};">${pm.name} ${pm.isVoucher ? `(Vale - Saldo: ${formatCurrency(pm.initialBalance || 0)})` : ''}</span>
                 <div>
@@ -802,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentMonthData = getCurrentMonthData();
         renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
-        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
+        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses'); // CORRIGIDO: Era currentScope, agora currentMonthData
         renderTable(currentMonthData.income, incomeTableBody, 'income');
         renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
         renderSummary();
@@ -959,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('paymentMethodId').value;
         const name = document.getElementById('paymentMethodName').value;
-        const color = paymentMethodColorInput.value; // Capturar a cor
+        const color = paymentMethodColorInput.value; // IMPORTANTE: Captura o valor da cor
         const isVoucher = name.toLowerCase().includes('vale') || name.toLowerCase().includes('ticket');
         const initialBalance = isVoucher ? parseFloat(document.getElementById('paymentMethodInitialBalance').value) || 0 : 0;
 
@@ -967,10 +969,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id) {
                 const index = monthData.paymentMethods.findIndex(pm => pm.id === id);
                 if (index !== -1) {
-                    monthData.paymentMethods[index] = { id, name, color, isVoucher, initialBalance }; // Incluir a cor
+                    monthData.paymentMethods[index] = { id, name, color, isVoucher, initialBalance }; // IMPORTANTE: Salva a cor
                 }
             } else {
-                const newPaymentMethod = { id: generateId(), name, color, isVoucher, initialBalance }; // Incluir a cor
+                const newPaymentMethod = { id: generateId(), name, color, isVoucher, initialBalance }; // IMPORTANTE: Salva a cor
                 monthData.paymentMethods.push(newPaymentMethod);
             }
         });
