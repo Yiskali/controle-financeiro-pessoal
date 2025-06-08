@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Variáveis Globais e Inicialização ---
-    let currentMonthKey; // Formato YYYY-MM
+    let currentMonthKey; // FormatogetFullYear()-MM
     let allMonthsData = {}; // Objeto para armazenar dados de todos os meses
 
     const monthSelect = document.getElementById('monthSelect');
@@ -377,7 +377,17 @@ document.addEventListener('DOMContentLoaded', () => {
             form.reset();
             const idInput = form.querySelector('input[type="hidden"]');
             if (idInput) idInput.value = '';
-            // Não chamar renderCategoryList/renderPaymentMethodList aqui
+            // Chamar renderCategoryList/renderPaymentMethodList aqui para atualizar a lista no modal
+            if (modalId === 'categoryModal') {
+                renderCategoryList();
+                expectedExpenseDiv.style.display = 'none'; // Esconde a expectativa ao resetar
+                document.getElementById('categoryExpectedExpense').value = ''; // Limpa o valor
+            }
+            if (modalId === 'paymentMethodModal') {
+                renderPaymentMethodList();
+                initialBalanceDiv.style.display = 'none'; // Esconde o saldo ao resetar
+                document.getElementById('paymentMethodInitialBalance').value = ''; // Limpa o valor
+            }
         }
     };
 
