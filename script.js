@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
+    const monthlyExpenseCategorySelect = document = document.getElementById('monthlyExpenseCategory');
     const incomeCategorySelect = document.getElementById('incomeCategory');
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
@@ -801,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentMonthData = getCurrentMonthData();
         renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
-        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
+        renderTable(currentScope.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
         renderTable(currentMonthData.income, incomeTableBody, 'income');
         renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
         renderSummary();
@@ -1080,9 +1080,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- Funções de Migração de Dados (AGORA NO ESCOPO GLOBAL) ---
+    // --- Funções de Migração de Dados ---
 
-    // **MOVIDA PARA CÁ**
     const migrateFixedExpenses = () => {
         const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
@@ -1108,7 +1107,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // **MOVIDA PARA CÁ**
     const migrateInstallments = () => {
         const masterInstallmentDefinitions = new Map();
 
@@ -1120,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     masterInstallmentDefinitions.set(inst.id, {
                         id: inst.id,
                         name: inst.name,
-                        originalDate: inst.originalDate,
+                        originalDate: inst.originalDate, // A data mais antiga para esta série
                         totalInstallments: inst.totalInstallments,
                         paymentMethodId: inst.paymentMethodId,
                         categoryId: inst.categoryId,
@@ -1300,19 +1298,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-   // --- Funções de Migração de Dados ---
-const migrateFixedExpenses = () => { ... }
+    // --- Inicialização da Aplicação ---
 
-const migrateInstallments = () => { ... }
+    const initializeApp = () => {
+        loadData();
+        migrateFixedExpenses();
+        migrateInstallments();
+        updateMonthSelect();
+        renderCurrentMonthData();
 
-// --- Inicialização da Aplicação ---
-const initializeApp = () => {
-    loadData();
-    migrateFixedExpenses();
-    migrateInstallments();
-    updateMonthSelect();
-    renderCurrentMonthData();
-    document.querySelector('.tab-button[data-tab="summary"]').click();
-};
+        document.querySelector('.tab-button[data-tab="summary"]').click();
+    };
 
-initializeApp();
+    initializeApp();
+});
