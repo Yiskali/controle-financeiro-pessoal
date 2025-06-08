@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const expectedExpenseDiv = document.getElementById('expectedExpenseDiv');
     const paymentMethodNameInput = document.getElementById('paymentMethodName');
     const initialBalanceDiv = document.getElementById('initialBalanceDiv');
+    const paymentMethodColorInput = document.getElementById('paymentMethodColor'); // NOVA VARIÁVEL AQUI
 
     // Listas de gerenciamento
     const categoryList = document.getElementById('categoryList');
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Gera um ID único
     const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
-    // Função auxiliar para determinar a cor de contraste do texto (para categorias)
+    // Função auxiliar para determinar a cor de contraste do texto (para categorias e formas de pagamento)
     function getContrastColor(hexcolor) {
         if (!hexcolor) return '#000';
         if (hexcolor.length === 4) {
@@ -101,6 +102,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = localStorage.getItem('financialData');
         if (data) {
             allMonthsData = JSON.parse(data);
+            // Garante que categorias e formas de pagamento tenham todas as propriedades esperadas, mesmo de dados antigos
+            Object.values(allMonthsData).forEach(monthData => {
+                monthData.categories = monthData.categories.map(cat => ({
+                    id: cat.id,
+                    name: cat.name,
+                    color: cat.color || '#cccccc', // Default color
+                    type: cat.type,
+                    expectedExpense: cat.expectedExpense || 0
+                }));
+                monthData.paymentMethods = monthData.paymentMethods.map(pm => ({
+                    id: pm.id,
+                    name: pm.name,
+                    color: pm.color || '#cccccc', // Adicionado default color para formas de pagamento
+                    isVoucher: pm.isVoucher || false,
+                    initialBalance: pm.initialBalance || 0
+                }));
+            });
         } else {
             // Inicializa com dados básicos se não houver nada
             const today = new Date();
@@ -119,10 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     { id: 'cat-4', name: 'Moradia', color: '#FF9800', type: 'expense', expectedExpense: 800 }
                 ],
                 paymentMethods: [
-                    { id: 'pm-1', name: 'Dinheiro' },
-                    { id: 'pm-2', name: 'Cartão de Crédito' },
-                    { id: 'pm-3', name: 'Cartão de Débito' },
-                    { id: 'pm-4', name: 'Vale Alimentação', isVoucher: true, initialBalance: 500 }
+                    { id: 'pm-1', name: 'Dinheiro', color: '#ADD8E6' }, // Cores iniciais
+                    { id: 'pm-2', name: 'Cartão de Crédito', color: '#90EE90' },
+                    { id: 'pm-3', name: 'Cartão de Débito', color: '#FFD700' },
+                    { id: 'pm-4', name: 'Vale Alimentação', isVoucher: true, initialBalance: 500, color: '#FF6347' }
                 ]
             };
         }
@@ -334,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) {
                         document.getElementById('paymentMethodId').value = item.id;
                         document.getElementById('paymentMethodName').value = item.name;
+                        paymentMethodColorInput.value = pm.color || '#cccccc'; // Preencher campo de cor
                         if (pm.isVoucher) {
                             initialBalanceDiv.style.display = 'block';
                             document.getElementById('paymentMethodInitialBalance').value = item.initialBalance || '';
@@ -359,7 +378,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const idInput = form.querySelector('input[type="hidden"]');
             if (idInput) idInput.value = '';
             // Não chamar renderCategoryList/renderPaymentMethodList aqui
-            // A lista será atualizada após o salvamento global (em renderCurrentMonthData)
         }
     };
 
@@ -589,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const row = paymentMethodSummaryTableBody.insertRow();
             row.innerHTML = `
-                <td>${pm.name}</td>
+                <td style="background-color: ${pm.color || '#cccccc'}; color: ${getContrastColor(pm.color)};">${pm.name}</td> <!-- Aplicar cor ao nome da forma de pagamento -->
                 <td>${formatCurrency(totalSpent)}</td>
                 <td>${pm.isVoucher ? formatCurrency(availableBalance) : 'N/A'}</td>
                 <td>
@@ -707,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentMethods.forEach(pm => {
             const li = document.createElement('li');
             li.innerHTML = `
-                <span>${pm.name} ${pm.isVoucher ? `(Vale - Saldo: ${formatCurrency(pm.initialBalance || 0)})` : ''}</span>
+                <span style="background-color: ${pm.color || '#cccccc'}; padding: 3px 8px; border-radius: 4px; color: ${getContrastColor(pm.color)};">${pm.name} ${pm.isVoucher ? `(Vale - Saldo: ${formatCurrency(pm.initialBalance || 0)})` : ''}</span>
                 <div>
                     <button onclick="editItem('${pm.id}', 'paymentMethod')">Editar</button>
                     <button onclick="deleteItem('${pm.id}', 'paymentMethod')">Excluir</button>
@@ -930,6 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('paymentMethodId').value;
         const name = document.getElementById('paymentMethodName').value;
+        const color = paymentMethodColorInput.value; // Capturar a cor
         const isVoucher = name.toLowerCase().includes('vale') || name.toLowerCase().includes('ticket');
         const initialBalance = isVoucher ? parseFloat(document.getElementById('paymentMethodInitialBalance').value) || 0 : 0;
 
@@ -937,10 +956,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id) {
                 const index = monthData.paymentMethods.findIndex(pm => pm.id === id);
                 if (index !== -1) {
-                    monthData.paymentMethods[index] = { id, name, isVoucher, initialBalance };
+                    monthData.paymentMethods[index] = { id, name, color, isVoucher, initialBalance }; // Incluir a cor
                 }
             } else {
-                const newPaymentMethod = { id: generateId(), name, isVoucher, initialBalance };
+                const newPaymentMethod = { id: generateId(), name, color, isVoucher, initialBalance }; // Incluir a cor
                 monthData.paymentMethods.push(newPaymentMethod);
             }
         });
@@ -1054,31 +1073,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Funções de Migração de Dados (Aprimorada para parcelas) ---
 
     const migrateFixedExpenses = () => {
-        const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
-            const [yearA, monthA] = a.split('-').map(Number);
-            const [yearB, monthB] = b.split('-').map(Number);
-            if (yearA !== yearB) return yearA - yearB;
-            return monthA - monthB;
-        });
-
-        for (let i = 0; i < sortedMonths.length - 1; i++) {
-            const currentMonthKey = sortedMonths[i];
-            const nextMonthKey = sortedMonths[i + 1];
-
-            const currentMonthData = allMonthsData[currentMonthKey];
-            const nextMonthData = allMonthsData[nextMonthKey];
-
-            if (currentMonthData && nextMonthData) {
-                currentMonthData.fixedExpenses.forEach(fixedExp => {
-                    if (!nextMonthData.fixedExpenses.some(exp => exp.id === fixedExp.id)) {
-                        nextMonthData.fixedExpenses.push({ ...fixedExp });
-                    }
-                });
-            }
-        }
-    };
-
-    const migrateInstallments = () => {
         const masterInstallmentDefinitions = new Map();
 
         // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
