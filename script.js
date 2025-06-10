@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalExpensesSummary = document.getElementById('totalExpensesSummary');
     const currentBalanceSummary = document.getElementById('currentBalanceSummary');
     const totalRegularSummary = document.getElementById('totalRegularSummary');
-    const totalVouchersSummary = document.getElementById('totalVouchersSummary');
-    const categorySummaryTableBody = document.querySelector('#categorySummaryTable tbody');
+    const totalVouchersSummary = .getElementById('totalVouchersSummary');
+    const categorySummaryTableBody = .querySelector('#categorySummaryTable tbody');
     const paymentMethodSummaryTableBody = document.querySelector('#paymentMethodSummaryTable tbody');
 
     // Tabelas
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory'); // Corrigido: Removido 'document ='
+    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
     const incomeCategorySelect = document.getElementById('incomeCategory');
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
@@ -1377,4 +1377,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
-```
+
