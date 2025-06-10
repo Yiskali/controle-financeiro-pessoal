@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Variáveis Globais e Inicialização ---
-    let currentMonthKey; // Formato YYYY-MM
+    let currentMonthKey; // FormatogetFullYear()-MM
     let allMonthsData = {}; // Objeto para armazenar dados de todos os meses
 
     const monthSelect = document.getElementById('monthSelect');
@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalExpensesSummary = document.getElementById('totalExpensesSummary');
     const currentBalanceSummary = document.getElementById('currentBalanceSummary');
     const totalRegularSummary = document.getElementById('totalRegularSummary');
-    const totalVouchersSummary = .getElementById('totalVouchersSummary');
-    const categorySummaryTableBody = .querySelector('#categorySummaryTable tbody');
+    const totalVouchersSummary = document.getElementById('totalVouchersSummary');
+    const categorySummaryTableBody = document.querySelector('#categorySummaryTable tbody');
     const paymentMethodSummaryTableBody = document.querySelector('#paymentMethodSummaryTable tbody');
 
     // Tabelas
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
     const addButtons = document.querySelectorAll('.add-button');
-    const quickActionButtons = document.querySelectorAll('.action-buttons button'); // Corrigido seletor para .action-buttons
+    const quickActionButtons = document.querySelectorAll('.action-buttons button'); // Seletor correto para .action-buttons
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
+    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory'); // CORRIGIDO: Removido 'document ='
     const incomeCategorySelect = document.getElementById('incomeCategory');
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const expectedExpenseDiv = document.getElementById('expectedExpenseDiv');
     const paymentMethodNameInput = document.getElementById('paymentMethodName');
     const initialBalanceDiv = document.getElementById('initialBalanceDiv');
-    const paymentMethodColorInput = document.getElementById('paymentMethodColor');
+    const paymentMethodColorInput = document.getElementById('paymentMethodColor'); // Variável para o input de cor da forma de pagamento
 
     // Listas de gerenciamento
     const categoryList = document.getElementById('categoryList');
@@ -402,18 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Certifique-se de que este seletor está correto: .action-buttons button
-    // Ele precisa corresponder exatamente à div no HTML
-    // const quickActionButtons = document.querySelectorAll('.action-buttons button'); // Antiga declaração, se o problema era este
-
-    // Se você estava usando quickActionButtons para gerenciar categorias/formas de pagamento
-    // e o seletor estava .action-actions, ele foi corrigido para .action-buttons no código fornecido.
-    // E os botões de gerenciamento de categoria/pagamento agora têm a classe add-button no HTML
-    // o que significa que o primeiro listener (addButtons.forEach) já os está ativando.
-    // Este bloco 'quickActionButtons' pode ser removido ou não ter listeners, dependendo do design final.
-    // POR ENQUANTO, VAMOS FOCAR QUE OS BOTÕES RECEBAM A CLASSE 'add-button' NO HTML.
-
-    // Removendo o loop quickActionButtons se os botões de gerenciamento agora têm add-button
+    // Removendo o loop quickActionButtons se os botões de gerenciamento agora têm add-button no HTML
+    // const quickActionButtons = document.querySelectorAll('.action-buttons button');
     // quickActionButtons.forEach(button => {
     //     button.addEventListener('click', (e) => {
     //         const modalId = e.target.dataset.modal;
@@ -1377,4 +1367,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
-
