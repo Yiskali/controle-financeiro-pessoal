@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Variáveis Globais e Inicialização ---
-    let currentMonthKey; // FormatogetFullYear()-MM
+    let currentMonthKey; // Formato YYYY-MM
     let allMonthsData = {}; // Objeto para armazenar dados de todos os meses
 
     const monthSelect = document.getElementById('monthSelect');
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
     const addButtons = document.querySelectorAll('.add-button');
-    const quickActionButtons = document.querySelectorAll('.action-buttons button');
+    const quickActionButtons = document.querySelectorAll('.action-buttons button'); // Corrigido seletor para .action-buttons
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory'); // Corrigido: Removido 'document = '
+    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory'); // Corrigido: Removido 'document ='
     const incomeCategorySelect = document.getElementById('incomeCategory');
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const expectedExpenseDiv = document.getElementById('expectedExpenseDiv');
     const paymentMethodNameInput = document.getElementById('paymentMethodName');
     const initialBalanceDiv = document.getElementById('initialBalanceDiv');
-    const paymentMethodColorInput = document.getElementById('paymentMethodColor'); // IMPORTANTE: Variável para o input de cor da forma de pagamento
+    const paymentMethodColorInput = document.getElementById('paymentMethodColor');
 
     // Listas de gerenciamento
     const categoryList = document.getElementById('categoryList');
@@ -66,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmYesBtn = document.getElementById('confirmYes');
     const confirmNoBtn = document.getElementById('confirmNo');
     let confirmCallback = null;
+
+    // Novo botão para limpar dados transacionais
+    const clearTransactionalDataButton = document.getElementById('clearTransactionalDataButton'); // NOVO ELEMENTO
 
     // Chart.js
     let expensesChart;
@@ -114,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthData.paymentMethods = monthData.paymentMethods.map(pm => ({
                     id: pm.id,
                     name: pm.name,
-                    color: pm.color || '#cccccc', // IMPORTANTE: Garante cor padrão para formas de pagamento ao carregar
+                    color: pm.color || '#cccccc', // Adicionado default color para formas de pagamento
                     isVoucher: pm.isVoucher || false,
                     initialBalance: pm.initialBalance || 0
                 }));
@@ -137,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { id: 'cat-4', name: 'Moradia', color: '#FF9800', type: 'expense', expectedExpense: 800 }
                 ],
                 paymentMethods: [
-                    { id: 'pm-1', name: 'Dinheiro', color: '#ADD8E6' }, // Cores iniciais para exemplos
+                    { id: 'pm-1', name: 'Dinheiro', color: '#ADD8E6' },
                     { id: 'pm-2', name: 'Cartão de Crédito', color: '#90EE90' },
                     { id: 'pm-3', name: 'Cartão de Débito', color: '#FFD700' },
                     { id: 'pm-4', name: 'Vale Alimentação', isVoucher: true, initialBalance: 500, color: '#FF6347' }
@@ -263,8 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthlyExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
                 income: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.income.map(inc => ({ ...inc })))) : [],
                 installments: [], // Parcelas não são copiadas diretamente ao criar um novo mês, elas migram
-                categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [], // Sempre copia categorias
-                paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : [] // Sempre copia formas de pagamento
+                categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
+                paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
             };
 
             currentMonthKey = newMonthKey;
@@ -352,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) {
                         document.getElementById('paymentMethodId').value = item.id;
                         document.getElementById('paymentMethodName').value = item.name;
-                        paymentMethodColorInput.value = pm.color || '#cccccc'; // IMPORTANTE: Preencher campo de cor ao editar
+                        paymentMethodColorInput.value = pm.color || '#cccccc'; // Preencher campo de cor
                         if (pm.isVoucher) {
                             initialBalanceDiv.style.display = 'block';
                             document.getElementById('paymentMethodInitialBalance').value = item.initialBalance || '';
@@ -399,12 +402,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    quickActionButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const modalId = e.target.dataset.modal;
-            openModal(modalId);
-        });
-    });
+    // Certifique-se de que este seletor está correto: .action-buttons button
+    // Ele precisa corresponder exatamente à div no HTML
+    // const quickActionButtons = document.querySelectorAll('.action-buttons button'); // Antiga declaração, se o problema era este
+
+    // Se você estava usando quickActionButtons para gerenciar categorias/formas de pagamento
+    // e o seletor estava .action-actions, ele foi corrigido para .action-buttons no código fornecido.
+    // E os botões de gerenciamento de categoria/pagamento agora têm a classe add-button no HTML
+    // o que significa que o primeiro listener (addButtons.forEach) já os está ativando.
+    // Este bloco 'quickActionButtons' pode ser removido ou não ter listeners, dependendo do design final.
+    // POR ENQUANTO, VAMOS FOCAR QUE OS BOTÕES RECEBAM A CLASSE 'add-button' NO HTML.
+
+    // Removendo o loop quickActionButtons se os botões de gerenciamento agora têm add-button
+    // quickActionButtons.forEach(button => {
+    //     button.addEventListener('click', (e) => {
+    //         const modalId = e.target.dataset.modal;
+    //         openModal(modalId);
+    //     });
+    // });
+
 
     // Event listeners para fechar modais
     closeButtons.forEach(button => {
@@ -441,6 +457,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         confirmModal.style.display = 'none';
     });
+
+    // --- NOVO: Função para limpar dados transacionais seletivamente ---
+    clearTransactionalDataButton.addEventListener('click', () => {
+        showConfirmModal('Tem certeza que deseja apagar TODOS os gastos, entradas e parcelas de TODOS os meses? Categorias e Formas de Pagamento serão mantidas.', (confirmed) => {
+            if (confirmed) {
+                console.log("Confirmado: Limpando dados transacionais de todos os meses.");
+                Object.keys(allMonthsData).forEach(monthKey => {
+                    allMonthsData[monthKey].fixedExpenses = [];
+                    allMonthsData[monthKey].monthlyExpenses = [];
+                    allMonthsData[monthKey].income = [];
+                    allMonthsData[monthKey].installments = [];
+                });
+                saveData();
+                renderCurrentMonthData();
+                alert('Dados transacionais limpos com sucesso! Categorias e Formas de Pagamento foram mantidas.');
+            } else {
+                console.log("Cancelado: Limpeza de dados transacionais.");
+            }
+        });
+    });
+
 
     // --- Funções de Renderização de Dados ---
 
@@ -616,7 +653,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const row = paymentMethodSummaryTableBody.insertRow();
-            // IMPORTANTE: Aplica a cor de fundo e a cor do texto no nome da forma de pagamento
             row.innerHTML = `
                 <td style="background-color: ${pm.color || '#cccccc'}; color: ${getContrastColor(pm.color)};">${pm.name}</td>
                 <td>${formatCurrency(totalSpent)}</td>
@@ -719,7 +755,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const categories = getCurrentMonthData().categories;
         categories.forEach(cat => {
             const li = document.createElement('li');
-            // IMPORTANTE: Aplica a cor de fundo e a cor do texto no nome da categoria
             li.innerHTML = `
                 <span style="background-color: ${cat.color}; padding: 3px 8px; border-radius: 4px; color: ${getContrastColor(cat.color)};">${cat.name} (${cat.type === 'expense' ? 'Despesa' : 'Receita'}${cat.type === 'expense' ? ` - Exp.: ${formatCurrency(cat.expectedExpense || 0)}` : ''})</span>
                 <div>
@@ -736,7 +771,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const paymentMethods = getCurrentMonthData().paymentMethods;
         paymentMethods.forEach(pm => {
             const li = document.createElement('li');
-            // IMPORTANTE: Aplica a cor de fundo e a cor do texto no nome da forma de pagamento na lista de gerenciamento
             li.innerHTML = `
                 <span style="background-color: ${pm.color || '#cccccc'}; padding: 3px 8px; border-radius: 4px; color: ${getContrastColor(pm.color)};">${pm.name} ${pm.isVoucher ? `(Vale - Saldo: ${formatCurrency(pm.initialBalance || 0)})` : ''}</span>
                 <div>
@@ -804,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentMonthData = getCurrentMonthData();
         renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
-        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses'); // CORRIGIDO: Era currentScope, agora currentMonthData
+        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
         renderTable(currentMonthData.income, incomeTableBody, 'income');
         renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
         renderSummary();
@@ -931,91 +965,85 @@ document.addEventListener('DOMContentLoaded', () => {
         closeModal(document.getElementById('installmentModal'));
     });
 
-    
     categoryForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('categoryId').value;
-    const name = document.getElementById('categoryName').value;
-    const color = document.getElementById('categoryColor').value;
-    const type = document.getElementById('categoryType').value;
-    const expectedExpense = type === 'expense' ? parseFloat(document.getElementById('categoryExpectedExpense').value) || 0 : 0;
+        e.preventDefault();
+        const id = document.getElementById('categoryId').value;
+        const name = document.getElementById('categoryName').value;
+        const color = document.getElementById('categoryColor').value;
+        const type = document.getElementById('categoryType').value;
+        const expectedExpense = type === 'expense' ? parseFloat(document.getElementById('categoryExpectedExpense').value) || 0 : 0;
 
-    // Crie a nova categoria ou a versão atualizada
-    let categoryToSave = { id: id || generateId(), name, color, type, expectedExpense };
+        // Crie a nova categoria ou a versão atualizada
+        let categoryToSave = { id: id || generateId(), name, color, type, expectedExpense };
 
-    // Agora, propague esta categoria (nova ou atualizada) para TODOS os meses
-    Object.keys(allMonthsData).forEach(monthKey => {
-        let monthData = allMonthsData[monthKey];
-        const index = monthData.categories.findIndex(cat => cat.id === categoryToSave.id);
-        if (index !== -1) {
-            // Se a categoria já existe neste mês, atualize-a
-            monthData.categories[index] = categoryToSave;
-        } else {
-            // Se a categoria é nova, adicione-a a este mês
-            monthData.categories.push(categoryToSave);
-        }
-    });
-    // IMPORTANTE: Remove duplicatas que podem ter sido criadas antes desta correção
-    // Isso é uma medida de limpeza única após a correção.
-    Object.keys(allMonthsData).forEach(monthKey => {
-        let monthData = allMonthsData[monthKey];
-        const seenIds = new Set();
-        monthData.categories = monthData.categories.filter(cat => {
-            const duplicate = seenIds.has(cat.id);
-            seenIds.add(cat.id);
-            return !duplicate;
+        // Agora, propague esta categoria (nova ou atualizada) para TODOS os meses
+        Object.keys(allMonthsData).forEach(monthKey => {
+            let monthData = allMonthsData[monthKey];
+            const index = monthData.categories.findIndex(cat => cat.id === categoryToSave.id);
+            if (index !== -1) {
+                // Se a categoria já existe neste mês, atualize-a
+                monthData.categories[index] = categoryToSave;
+            } else {
+                // Se a categoria é nova, adicione-a a este mês
+                monthData.categories.push(categoryToSave);
+            }
         });
-    });
+        // IMPORTANTE: Remove duplicatas que podem ter sido criadas antes desta correção
+        Object.keys(allMonthsData).forEach(monthKey => {
+            let monthData = allMonthsData[monthKey];
+            const seenIds = new Set();
+            monthData.categories = monthData.categories.filter(cat => {
+                const duplicate = seenIds.has(cat.id);
+                seenIds.add(cat.id);
+                return !duplicate;
+            });
+        });
 
-    saveData();
-    renderCurrentMonthData();
-    renderCategoryList(); // Mantém a lista atualizada dentro do modal
-    populateSelects(); // Atualiza selects dos modais
-});
-    
+        saveData();
+        renderCurrentMonthData();
+        renderCategoryList(); // Mantém a lista atualizada dentro do modal
+        populateSelects(); // Atualiza selects dos modais
+    });
 
     paymentMethodForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('paymentMethodId').value;
-    const name = document.getElementById('paymentMethodName').value;
-    const color = paymentMethodColorInput.value;
-    const isVoucher = name.toLowerCase().includes('vale') || name.toLowerCase().includes('ticket');
-    const initialBalance = isVoucher ? parseFloat(document.getElementById('paymentMethodInitialBalance').value) || 0 : 0;
+        e.preventDefault();
+        const id = document.getElementById('paymentMethodId').value;
+        const name = document.getElementById('paymentMethodName').value;
+        const color = paymentMethodColorInput.value; // Capturar a cor
+        const isVoucher = name.toLowerCase().includes('vale') || name.toLowerCase().includes('ticket');
+        const initialBalance = isVoucher ? parseFloat(document.getElementById('paymentMethodInitialBalance').value) || 0 : 0;
 
-    // Crie a nova forma de pagamento ou a versão atualizada
-    let paymentMethodToSave = { id: id || generateId(), name, color, isVoucher, initialBalance };
+        // Crie a nova forma de pagamento ou a versão atualizada
+        let paymentMethodToSave = { id: id || generateId(), name, color, isVoucher, initialBalance };
 
-    // Agora, propague esta forma de pagamento (nova ou atualizada) para TODOS os meses
-    Object.keys(allMonthsData).forEach(monthKey => {
-        let monthData = allMonthsData[monthKey];
-        const index = monthData.paymentMethods.findIndex(pm => pm.id === paymentMethodToSave.id);
-        if (index !== -1) {
-            // Se a forma de pagamento já existe neste mês, atualize-a
-            monthData.paymentMethods[index] = paymentMethodToSave;
-        } else {
-            // Se a forma de pagamento é nova, adicione-a a este mês
-            monthData.paymentMethods.push(paymentMethodToSave);
-        }
-    });
-    // IMPORTANTE: Remove duplicatas que podem ter sido criadas antes desta correção
-    // Isso é uma medida de limpeza única após a correção.
-    Object.keys(allMonthsData).forEach(monthKey => {
-        let monthData = allMonthsData[monthKey];
-        const seenIds = new Set();
-        monthData.paymentMethods = monthData.paymentMethods.filter(pm => {
-            const duplicate = seenIds.has(pm.id);
-            seenIds.add(pm.id);
-            return !duplicate;
+        // Agora, propague esta forma de pagamento (nova ou atualizada) para TODOS os meses
+        Object.keys(allMonthsData).forEach(monthKey => {
+            let monthData = allMonthsData[monthKey];
+            const index = monthData.paymentMethods.findIndex(pm => pm.id === paymentMethodToSave.id);
+            if (index !== -1) {
+                // Se a forma de pagamento já existe neste mês, atualize-a
+                monthData.paymentMethods[index] = paymentMethodToSave;
+            } else {
+                // Se a forma de pagamento é nova, adicione-a a este mês
+                monthData.paymentMethods.push(paymentMethodToSave);
+            }
         });
+        // IMPORTANTE: Remove duplicatas que podem ter sido criadas antes desta correção
+        Object.keys(allMonthsData).forEach(monthKey => {
+            let monthData = allMonthsData[monthKey];
+            const seenIds = new Set();
+            monthData.paymentMethods = monthData.paymentMethods.filter(pm => {
+                const duplicate = seenIds.has(pm.id);
+                seenIds.add(pm.id);
+                return !duplicate;
+            });
+        });
+
+        saveData();
+        renderCurrentMonthData();
+        renderPaymentMethodList(); // Mantém a lista atualizada dentro do modal
+        populateSelects(); // Atualiza selects dos modais
     });
-
-    saveData();
-    renderCurrentMonthData();
-    renderPaymentMethodList(); // Mantém a lista atualizada dentro do modal
-    populateSelects(); // Atualiza selects dos modais
-});
-
-    
 
     categoryTypeSelect.addEventListener('change', (e) => {
         if (e.target.value === 'expense') {
@@ -1349,3 +1377,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
+```
