@@ -342,11 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('categoryName').value = item.name;
                         document.getElementById('categoryColor').value = item.color || '#cccccc';
                         document.getElementById('categoryType').value = item.type;
+                        // Ao editar, mostramos a expectativa se o tipo for despesa
                         if (item.type === 'expense') {
                             expectedExpenseDiv.style.display = 'block';
                             document.getElementById('categoryExpectedExpense').value = item.expectedExpense || '';
                         } else {
                             expectedExpenseDiv.style.display = 'none';
+                            document.getElementById('categoryExpectedExpense').value = ''; // Limpa se for receita
                         }
                     }
                     break;
@@ -367,6 +369,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         populateSelects(); // Popula os selects do modal (categorias e formas de pagamento)
+
+        // IMPORTANTE: Dispara o evento change no categoryTypeSelect para que a visibilidade da expectativa seja atualizada
+        // Isso garante que a div de expectativa apareça/desapareça corretamente ao abrir o modal
+        const event = new Event('change');
+        categoryTypeSelect.dispatchEvent(event);
     };
 
     const closeModal = (modal) => {
@@ -383,8 +390,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Chamar renderCategoryList/renderPaymentMethodList aqui para atualizar a lista no modal
             if (modalId === 'categoryModal') {
                 renderCategoryList(); // Re-renderiza a lista de categorias no modal
-                expectedExpenseDiv.style.display = 'none'; // Esconde a expectativa ao resetar
+                // A linha expectedExpenseDiv.style.display = 'none'; FOI REMOVIDA AQUI
                 document.getElementById('categoryExpectedExpense').value = ''; // Limpa o valor
+
+                // IMPORTANTE: Dispara o evento change no categoryTypeSelect após o reset
+                // Isso garante que a visibilidade da expectativa seja definida pelo valor padrão ('expense')
+                const event = new Event('change');
+                categoryTypeSelect.dispatchEvent(event);
             }
             if (modalId === 'paymentMethodModal') {
                 renderPaymentMethodList(); // Re-renderiza a lista de formas de pagamento no modal
