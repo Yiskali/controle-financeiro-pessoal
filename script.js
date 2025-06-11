@@ -1005,6 +1005,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         renderCategoryList(); // Mantém a lista atualizada dentro do modal
         populateSelects(); // Atualiza selects dos modais
+        // NOVA LINHA AQUI: Resetar o formulário de categoria para permitir nova adição
+        resetForm('categoryModal');
     });
 
     paymentMethodForm.addEventListener('submit', (e) => {
@@ -1045,6 +1047,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         renderPaymentMethodList(); // Mantém a lista atualizada dentro do modal
         populateSelects(); // Atualiza selects dos modais
+        // NOVA LINHA AQUI: Resetar o formulário de forma de pagamento para permitir nova adição
+        resetForm('paymentMethodModal');
     });
 
     categoryTypeSelect.addEventListener('change', (e) => {
