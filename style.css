@@ -8,7 +8,7 @@
     --text-color-title: #C1BBAE; /* Cor da fonte dos títulos do resumo */
     --balance-positive-color: #0C343D;
     --balance-negative-color: #461D17;
-    --terracotta: #A0522D;
+    --terracota: #A0522D;
     --olive-green: #808000;
     --beige: #DAD0B5;
     --light-gray: #d4d0ca;
@@ -21,6 +21,14 @@
     --button-hover-bg: #8c4728;
     --modal-bg: rgba(0, 0, 0, 0.5);
     --modal-content-bg: #F6F1E2;
+
+    /* Novas cores para botões de Ações Rápidas - tons mais fortes */
+    --action-button-category-bg: #8c4728; /* Terracota mais escuro */
+    --action-button-payment-bg: #5F744A; /* Verde Escuro */
+    --action-button-salary-bg: #A9A515; /* Amarelo da Entrada */
+    --action-button-export-bg: #0C343D; /* Azul marinho */
+    --action-button-import-bg: #A78C74; /* Marrom claro */
+    --action-button-clear-bg: #461D17; /* Vermelho escuro */
 }
 
 * {
@@ -216,7 +224,7 @@ table td button:hover {
     background-color: var(--button-hover-bg);
 }
 
-/* Add Button for Sections */
+/* Add Button for Sections (Mantido para "Adicionar Gasto") */
 .add-button {
     background-color: var(--olive-green);
     color: var(--light-text);
@@ -253,9 +261,9 @@ table td button:hover {
     padding: 30px;
     border-radius: 10px;
     width: 90%;
-    max-width: 600px; /* Aumentado para dar mais espaço horizontal */
-    max-height: 90vh; /* Limita a altura máxima a 90% da altura da viewport */
-    overflow-y: auto; /* Adiciona rolagem vertical se o conteúdo exceder a altura */
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     position: relative;
 }
@@ -355,42 +363,83 @@ table td button:hover {
     background-color: var(--button-hover-bg);
 }
 
-/* SEÇÃO DE AÇÕES RÁPIDAS (AGORA UMA ABA) */
-/* Removendo estilos details/summary que não são mais usados */
-#quick-actions { /* Usando o ID da seção agora */
-    /* Estilos já herdados de .tab-content */
-    padding-top: 20px; /* Garante espaçamento superior */
+/* Estilos para a NOVA ABA DE AÇÕES RÁPIDAS (GRID) */
+#quick-actions {
+    /* Herda estilos de .tab-content */
+    padding-top: 20px;
+    text-align: center; /* Centraliza o h2 */
 }
 
 #quick-actions h2 {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     color: var(--terracota);
-    text-align: center; /* Centraliza o título */
 }
 
-.action-buttons {
+.action-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Colunas flexíveis, mínimo 180px */
+    gap: 25px; /* Espaçamento entre os botões */
+    justify-items: center; /* Centraliza itens na grade */
+    align-items: start; /* Alinha itens ao topo em suas células */
+    max-width: 900px; /* Limita a largura da grade de botões */
+    margin: 0 auto; /* Centraliza a grade de botões */
+}
+
+.action-grid-button {
     display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center; /* Centraliza os botões */
-    padding-top: 10px;
-}
-
-.action-buttons button {
-    background-color: var(--terracota);
-    color: var(--light-text);
-    border: none;
-    padding: 12px 25px;
-    border-radius: 5px;
-    cursor: pointer;
+    flex-direction: column; /* Ícone acima do texto */
+    align-items: center; /* Centraliza horizontalmente ícone e texto */
+    justify-content: center; /* Centraliza verticalmente */
+    width: 180px; /* Largura fixa para botões quadrados */
+    height: 180px; /* Altura fixa para botões quadrados */
+    border-radius: 15px; /* Bordas mais arredondadas */
     font-family: 'Rajdhani', sans-serif;
-    font-size: 1.1rem;
-    transition: background-color 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--light-text); /* Texto claro para contraste */
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para destaque */
 }
 
-.action-buttons button:hover {
-    background-color: #8c4728;
+.action-grid-button i {
+    font-size: 3.5rem; /* Tamanho grande para os ícones */
+    margin-bottom: 10px; /* Espaçamento entre ícone e texto */
+    color: var(--light-text); /* Cor do ícone */
 }
+
+.action-grid-button span {
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Cores específicas para cada tipo de botão */
+#quick-actions .action-buttons-grid button:nth-child(1) { /* Gerenciar Categorias */
+    background-color: var(--action-button-category-bg);
+}
+#quick-actions .action-buttons-grid button:nth-child(2) { /* Gerenciar Formas de Pagamento */
+    background-color: var(--action-button-payment-bg);
+}
+#quick-actions .action-buttons-grid button:nth-child(3) { /* Inserir Salário */
+    background-color: var(--action-button-salary-bg);
+}
+#quick-actions .action-buttons-grid button:nth-child(4) { /* Exportar Dados */
+    background-color: var(--action-button-export-bg);
+}
+#quick-actions .action-buttons-grid button:nth-child(5) { /* Importar Dados */
+    background-color: var(--action-button-import-bg);
+}
+#quick-actions .action-buttons-grid button:nth-child(6) { /* Limpar Dados Transacionais */
+    background-color: var(--action-button-clear-bg);
+}
+
+.action-grid-button:hover {
+    transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.1); /* Um pouco mais claro no hover */
+}
+
 
 /* Chart Container */
 .chart-container {
@@ -441,13 +490,20 @@ table td button:hover {
     #quick-actions { /* Usando o ID da seção agora */
         padding: 0 10px;
     }
-
-    .action-buttons {
-        flex-direction: column;
-        align-items: center;
+    
+    .action-buttons-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Reduz tamanho mínimo em mobile */
+        gap: 15px;
     }
-    .action-buttons button {
-        margin: 5px 0; /* Ajuste para espaçamento vertical em mobile */
+    .action-grid-button {
+        width: 140px;
+        height: 140px;
+    }
+    .action-grid-button i {
+        font-size: 2.5rem;
+    }
+    .action-grid-button span {
+        font-size: 0.9rem;
     }
 
     .chart-container {
