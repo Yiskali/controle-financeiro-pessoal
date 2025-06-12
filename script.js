@@ -13,16 +13,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabButtons = document.querySelectorAll('.tab-button'); // Única declaração para tabButtons
     const tabContents = document.querySelectorAll('.tab-content');
 
-    // Resumo Cards - ATUALIZADOS
+    // Resumo Cards
     const totalIncomeSummary = document.getElementById('totalIncomeSummary');
     const totalExpensesSummary = document.getElementById('totalExpensesSummary');
     const currentBalanceSummary = document.getElementById('currentBalanceSummary');
     // Renomeados
-    const totalSpentRegularSummary = document.getElementById('totalSpentRegularSummary'); // Renomeado
-    const totalSpentVouchersSummary = document.getElementById('totalSpentVouchersSummary'); // Renomeado
+    const totalSpentRegularSummary = document.getElementById('totalSpentRegularSummary');
+    const totalSpentVouchersSummary = document.getElementById('totalSpentVouchersSummary');
     // Novos Cards de Saldo
-    const currentRegularBalanceSummary = document.getElementById('currentRegularBalanceSummary'); // NOVO
-    const currentVoucherBalanceSummary = document.getElementById('currentVoucherBalanceSummary'); // NOVO
+    const currentRegularBalanceSummary = document.getElementById('currentRegularBalanceSummary');
+    const currentVoucherBalanceSummary = document.getElementById('currentVoucherBalanceSummary');
 
     const categorySummaryTableBody = document.querySelector('#categorySummaryTable tbody');
     const paymentMethodSummaryTableBody = document.querySelector('#paymentMethodSummaryTable tbody');
@@ -30,36 +30,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tabelas
     const fixedExpensesTableBody = document.querySelector('#fixedExpensesTable tbody');
     const monthlyExpensesTableBody = document.querySelector('#monthlyExpensesTable tbody');
-    const incomeTableBody = document.querySelector('#incomeTable tbody');
+    // const incomeTableBody = document.querySelector('#incomeTable tbody'); // REMOVIDO: Tabela de entradas não existe mais
     const installmentsTableBody = document.querySelector('#installmentsTable tbody');
 
     // Modais
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
-    const addButtons = document.querySelectorAll('.add-button');
-    const quickActionButtons = document.querySelectorAll('.action-buttons button'); // Seletor correto para .action-buttons
+    const addButtons = document.querySelectorAll('.add-button'); // Botões que abrem modais (inclui novos no HTML)
+    // quickActionButtons NÃO É MAIS NECESSÁRIO como um listener separado se todos os botões de ação rápida têm add-button
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
     const monthlyExpenseForm = document.getElementById('monthlyExpenseForm');
-    const incomeForm = document.getElementById('incomeForm');
+    // const incomeForm = document.getElementById('incomeForm'); // REMOVIDO: Formulário de entradas não existe mais
     const installmentForm = document.getElementById('installmentForm');
     const categoryForm = document.getElementById('categoryForm');
     const paymentMethodForm = document.getElementById('paymentMethodForm');
+    // Novo Formulário e Botão para Salário Mensal
+    const openIncomeModalButton = document.getElementById('openIncomeModalButton'); // NOVO BOTÃO
+    const incomeInputModal = document.getElementById('incomeInputModal'); // NOVO MODAL
+    const incomeInputForm = document.getElementById('incomeInputForm'); // NOVO FORMULÁRIO
+    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue'); // NOVO CAMPO DE VALOR
 
     // Campos de seleção para categorias e formas de pagamento
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
-    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory'); // CORRIGIDO: Removido 'document ='
-    const incomeCategorySelect = document.getElementById('incomeCategory');
+    const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
+    // const incomeCategorySelect = document.getElementById('incomeCategory'); // REMOVIDO: Categoria de entrada única
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
     const categoryTypeSelect = document.getElementById('categoryType');
     const expectedExpenseDiv = document.getElementById('expectedExpenseDiv');
     const paymentMethodNameInput = document.getElementById('paymentMethodName');
     const initialBalanceDiv = document.getElementById('initialBalanceDiv');
-    const paymentMethodColorInput = document.getElementById('paymentMethodColor'); // Variável para o input de cor da forma de pagamento
+    const paymentMethodColorInput = document.getElementById('paymentMethodColor');
 
     // Listas de gerenciamento
     const categoryList = document.getElementById('categoryList');
@@ -72,8 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmNoBtn = document.getElementById('confirmNo');
     let confirmCallback = null;
 
-    // Novo botão para limpar dados transacionais
-    const clearTransactionalDataButton = document.getElementById('clearTransactionalDataButton'); // NOVO ELEMENTO
+    // Botão para limpar dados transacionais
+    const clearTransactionalDataButton = document.getElementById('clearTransactionalDataButton');
 
     // Chart.js
     let expensesChart;
@@ -112,10 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
             allMonthsData = JSON.parse(data);
             // Garante que categorias e formas de pagamento tenham todas as propriedades esperadas, mesmo de dados antigos
             Object.values(allMonthsData).forEach(monthData => {
+                // Assegura que income é sempre um array e tem um item 'salary'
+                if (!monthData.income || !Array.isArray(monthData.income) || !monthData.income.some(item => item.id === 'salary')) {
+                    monthData.income = [{ id: 'salary', name: 'Salário Mensal', value: 0 }];
+                }
+                // Garante que as outras propriedades da categoria/pm existam
                 monthData.categories = monthData.categories.map(cat => ({
                     id: cat.id,
                     name: cat.name,
-                    color: cat.color || '#cccccc', // Default color
+                    color: cat.color || '#cccccc',
                     type: cat.type,
                     expectedExpense: cat.expectedExpense || 0
                 }));
@@ -123,9 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: pm.id,
                     name: pm.name,
                     color: pm.color || '#cccccc',
-                    // IMPORTANTE: Re-avalia isVoucher e initialBalance com base no nome
                     isVoucher: (pm.name && (pm.name.toLowerCase().includes('vale') || pm.name.toLowerCase().includes('ticket'))) || false,
-                    initialBalance: pm.initialBalance || 0 // Mantém o saldo se existir, senão 0
+                    initialBalance: pm.initialBalance || 0
                 }));
             });
         } else {
@@ -137,7 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allMonthsData[currentMonthKey] = {
                 fixedExpenses: [],
                 monthlyExpenses: [],
-                income: [],
+                // Entrada única de salário
+                income: [{ id: 'salary', name: 'Salário Mensal', value: 0 }],
                 installments: [],
                 categories: [
                     { id: 'cat-1', name: 'Salário', color: '#8BC34A', type: 'income', expectedExpense: 0 },
@@ -168,7 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     currentMonthKey = newMonthKey; // Cria se for o primeiro
                     allMonthsData[currentMonthKey] = {
-                        fixedExpenses: [], monthlyExpenses: [], income: [], installments: [],
+                        fixedExpenses: [], monthlyExpenses: [], installments: [],
+                        income: [{ id: 'salary', name: 'Salário Mensal', value: 0 }], // Garante o salário inicial
                         categories: [], paymentMethods: []
                     };
                 }
@@ -225,7 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allMonthsData[newMonthKey] = {
                 fixedExpenses: [],
                 monthlyExpenses: [],
-                income: [],
+                // Garante que o salário mensal também esteja lá ao criar um novo mês
+                income: [{ id: 'salary', name: 'Salário Mensal', value: (currentMonthData && currentMonthData.income.find(i => i.id === 'salary')?.value) || 0 }],
                 installments: [], // Parcelas não são copiadas aqui, elas migram
                 categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
                 paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
@@ -270,7 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allMonthsData[newMonthKey] = {
                 fixedExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.fixedExpenses.map(exp => ({ ...exp })))) : [],
                 monthlyExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
-                income: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.income.map(inc => ({ ...inc })))) : [],
+                // Garante que o salário mensal também seja copiado
+                income: [{ id: 'salary', name: 'Salário Mensal', value: (currentMonthData && currentMonthData.income.find(i => i.id === 'salary')?.value) || 0 }],
                 installments: [], // Parcelas não são copiadas diretamente ao criar um novo mês, elas migram
                 categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
                 paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
@@ -319,16 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('monthlyExpenseValue').value = item.value;
                     }
                     break;
-                case 'income':
-                    item = currentMonthData.income.find(inc => inc.id === itemId);
-                    if (item) {
-                        document.getElementById('incomeId').value = item.id;
-                        document.getElementById('incomeName').value = item.name;
-                        document.getElementById('incomeDate').value = item.date;
-                        document.getElementById('incomeCategory').value = item.categoryId;
-                        document.getElementById('incomeValue').value = item.value;
-                    }
-                    break;
+                // REMOVIDO: Case para entradas via tabela (income)
                 case 'installments':
                     item = currentMonthData.installments.find(inst => inst.id === itemId);
                     if (item) {
@@ -383,11 +387,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('paymentMethodInitialBalance').value = ''; // Limpa o valor do saldo
                     }
                     break;
+                // NOVO: Case para o modal de entrada de salário
+                case 'incomeInput':
+                    const salaryItem = currentMonthData.income.find(i => i.id === 'salary');
+                    monthlySalaryValueInput.value = salaryItem ? salaryItem.value : 0;
+                    break;
             }
         } else if (modalId === 'paymentMethodModal') { // Se o modal é de paymentMethod e não estamos editando (ou seja, novo)
              // Assegurar que o campo de saldo está escondido para novas formas de pagamento ao abrir o modal
              initialBalanceDiv.style.display = 'none';
              document.getElementById('paymentMethodInitialBalance').value = '';
+        } else if (modalId === 'incomeInputModal') { // Se o modal é de entrada de salário e não estamos editando (sempre será um novo valor para este mês)
+            const salaryItem = currentMonthData.income.find(i => i.id === 'salary');
+            monthlySalaryValueInput.value = salaryItem ? salaryItem.value : 0;
         }
 
         populateSelects(); // Popula os selects do modal (categorias e formas de pagamento)
@@ -426,6 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 initialBalanceDiv.style.display = 'none'; // Esconde o saldo ao resetar
                 document.getElementById('paymentMethodInitialBalance').value = ''; // Limpa o valor
             }
+            if (modalId === 'incomeInputModal') { // NOVO: Reset para o modal de salário
+                monthlySalaryValueInput.value = 0;
+            }
         }
     };
 
@@ -437,14 +452,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Removendo o loop quickActionButtons se os botões de gerenciamento agora têm add-button no HTML
-    // const quickActionButtons = document.querySelectorAll('.action-buttons button');
-    // quickActionButtons.forEach(button => {
-    //     button.addEventListener('click', (e) => {
-    //         const modalId = e.target.dataset.modal;
-    //         openModal(modalId);
-    //     });
-    // });
+    // Listener para o novo botão 'Inserir Salário'
+    openIncomeModalButton.addEventListener('click', () => {
+        openModal('incomeInputModal', null, 'incomeInput'); // Abre o modal de salário
+    });
 
 
     // Event listeners para fechar modais
@@ -491,7 +502,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 Object.keys(allMonthsData).forEach(monthKey => {
                     allMonthsData[monthKey].fixedExpenses = [];
                     allMonthsData[monthKey].monthlyExpenses = [];
-                    allMonthsData[monthKey].income = [];
+                    // Mantém o salário mensal, apenas zera o valor
+                    let salaryItem = allMonthsData[monthKey].income.find(i => i.id === 'salary');
+                    if (salaryItem) {
+                        salaryItem.value = 0;
+                    } else {
+                        allMonthsData[monthKey].income.push({ id: 'salary', name: 'Salário Mensal', value: 0 });
+                    }
                     allMonthsData[monthKey].installments = [];
                 });
                 saveData();
@@ -503,6 +520,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- NOVO: Lógica para Salvar o Salário Mensal ---
+    incomeInputForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const salaryValue = parseFloat(monthlySalaryValueInput.value);
+        
+        if (isNaN(salaryValue) || salaryValue < 0) {
+            alert("Por favor, insira um valor de salário válido e não negativo.");
+            return;
+        }
+
+        const currentMonthData = getCurrentMonthData();
+        let salaryItem = currentMonthData.income.find(i => i.id === 'salary');
+
+        if (salaryItem) {
+            salaryItem.value = salaryValue;
+        } else {
+            // Isso não deve acontecer se loadData() inicializar corretamente, mas é uma segurança
+            currentMonthData.income.push({ id: 'salary', name: 'Salário Mensal', value: salaryValue });
+        }
+        
+        saveData();
+        renderCurrentMonthData();
+        closeModal(incomeInputModal);
+        alert('Salário mensal salvo com sucesso!');
+    });
+
 
     // --- Funções de Renderização de Dados ---
 
@@ -510,7 +553,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentMonthData = getCurrentMonthData();
         if (!currentMonthData) return;
 
-        let totalIncome = currentMonthData.income.reduce((sum, item) => sum + item.value, 0);
+        // Total de Entradas: Agora vem do salário mensal
+        const monthlySalary = currentMonthData.income.find(item => item.id === 'salary')?.value || 0;
+        let totalIncome = monthlySalary; // O total de entradas é apenas o salário mensal
+
         let totalFixed = currentMonthData.fixedExpenses.reduce((sum, item) => sum + item.value, 0);
         let totalMonthly = currentMonthData.monthlyExpenses.reduce((sum, item) => sum + item.value, 0);
         let totalInstallments = currentMonthData.installments
@@ -529,6 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalSpentRegular = 0;
         let totalSpentVouchers = 0;
         let totalInitialVoucherBalance = 0; // Soma dos saldos iniciais de todas as formas de pagamento 'vale'
+        let totalInitialRegularIncome = totalIncome; // Saldo inicial regular é o total de entradas (salário)
 
         // Coleta o saldo inicial de todas as formas de pagamento que são vales
         const paymentMethods = getCurrentMonthData().paymentMethods;
@@ -555,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Cálculos dos Saldos
         let currentVoucherBalance = totalInitialVoucherBalance - totalSpentVouchers;
-        let currentRegularBalance = totalIncome - totalSpentRegular; // Entradas (total) - Gastos Regulares
+        let currentRegularBalance = totalInitialRegularIncome - totalSpentRegular; // Saldo Regular = Entradas (salário) - Gastos Regulares
 
         // ATUALIZAÇÃO DOS CARDS
         totalSpentRegularSummary.textContent = formatCurrency(totalSpentRegular);
@@ -614,18 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </td>
                     `;
                     break;
-                case 'income':
-                    row.innerHTML = `
-                        <td>${item.name}</td>
-                        <td>${item.date}</td>
-                        <td>${categoryName}</td>
-                        <td>${formatCurrency(item.value)}</td>
-                        <td>
-                            <button onclick="editItem('${item.id}', 'income')">Editar</button>
-                            <button onclick="deleteItem('${item.id}', 'income')">Excluir</button>
-                        </td>
-                    `;
-                    break;
+                // REMOVIDO: Renderização de tabela para entradas
                 case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
@@ -726,73 +762,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    
-const renderChart = () => {
-    const currentMonthData = getCurrentMonthData();
-    if (!currentMonthData) return;
 
-    const expenseCategories = currentMonthData.categories.filter(cat => cat.type === 'expense');
-    const categoryExpenses = {};
+    const renderChart = () => {
+        const currentMonthData = getCurrentMonthData();
+        if (!currentMonthData) return;
 
-    expenseCategories.forEach(cat => categoryExpenses[cat.id] = 0);
+        const expenseCategories = currentMonthData.categories.filter(cat => cat.type === 'expense');
+        const categoryExpenses = {};
 
-    const allExpenses = [
-        ...currentMonthData.fixedExpenses,
-        ...currentMonthData.monthlyExpenses,
-        ...currentMonthData.installments.filter(inst => inst.status === 'Ativa')
-    ];
+        expenseCategories.forEach(cat => categoryExpenses[cat.id] = 0);
 
-    allExpenses.forEach(exp => {
-        if (exp.categoryId && categoryExpenses.hasOwnProperty(exp.categoryId)) {
-            categoryExpenses[exp.categoryId] += (exp.value || exp.valuePerInstallment);
+        const allExpenses = [
+            ...currentMonthData.fixedExpenses,
+            ...currentMonthData.monthlyExpenses,
+            ...currentMonthData.installments.filter(inst => inst.status === 'Ativa')
+        ];
+
+        allExpenses.forEach(exp => {
+            if (exp.categoryId && categoryExpenses.hasOwnProperty(exp.categoryId)) {
+                categoryExpenses[exp.categoryId] += (exp.value || exp.valuePerInstallment);
+            }
+        });
+
+        const labels = expenseCategories.map(cat => cat.name);
+        const data = expenseCategories.map(cat => categoryExpenses[cat.id]);
+        const backgroundColors = expenseCategories.map(cat => cat.color || '#cccccc');
+
+        const ctx = document.getElementById('expensesChart').getContext('2d');
+
+        if (expensesChart) {
+            expensesChart.destroy();
         }
-    });
 
-    const labels = expenseCategories.map(cat => cat.name);
-    const data = expenseCategories.map(cat => categoryExpenses[cat.id]);
-    const backgroundColors = expenseCategories.map(cat => cat.color || '#cccccc');
-
-    const ctx = document.getElementById('expensesChart').getContext('2d');
-
-    if (expensesChart) {
-        expensesChart.destroy();
-    }
-
-    expensesChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: backgroundColors,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
+        expensesChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += formatCurrency(context.parsed);
+                                }
+                                return label;
                             }
-                            if (context.parsed !== null) {
-                                label += formatCurrency(context.parsed);
-                            }
-                            return label;
                         }
                     }
                 }
             }
-        }
-    }); // O PARÊNTESE DE FECHAMENTO AQUI ERA O FIM DA CHAMADA Chart()
-}; // Este é o fechamento da função renderChart()
-    
+        });
+    };
 
     const renderCategoryList = () => {
         categoryList.innerHTML = '';
@@ -834,8 +869,8 @@ const renderChart = () => {
         const populateSelect = (selectElement, items, type) => {
             selectElement.innerHTML = '<option value="">Selecione...</option>';
             items.forEach(item => {
-                if (type === 'income' && item.type !== 'income') return;
-                if (['fixedExpense', 'monthlyExpense', 'installment'].includes(type) && item.type !== 'expense') return;
+                if (type === 'income' && item.type !== 'income') return; // Para income, só categorias de receita
+                if (['fixedExpenses', 'monthlyExpenses', 'installments'].includes(type) && item.type !== 'expense') return; // Para despesas, só categorias de despesa
 
                 const option = document.createElement('option');
                 option.value = item.id;
@@ -845,12 +880,12 @@ const renderChart = () => {
         };
 
         populateSelect(fixedExpensePaymentMethodSelect, paymentMethods, 'paymentMethod');
-        populateSelect(fixedExpenseCategorySelect, categories, 'fixedExpense');
+        populateSelect(fixedExpenseCategorySelect, categories, 'fixedExpenses'); // Alterado para fixedExpenses para usar o filtro de despesa
         populateSelect(monthlyExpensePaymentMethodSelect, paymentMethods, 'paymentMethod');
-        populateSelect(monthlyExpenseCategorySelect, categories, 'monthlyExpense');
-        populateSelect(incomeCategorySelect, categories, 'income');
+        populateSelect(monthlyExpenseCategorySelect, categories, 'monthlyExpenses'); // Alterado para monthlyExpenses para usar o filtro de despesa
+        // populateSelect(incomeCategorySelect, categories, 'income'); // REMOVIDO: Não há mais seleção de categoria para o salário único
         populateSelect(installmentPaymentMethodSelect, paymentMethods, 'paymentMethod');
-        populateSelect(installmentCategorySelect, categories, 'installment');
+        populateSelect(installmentCategorySelect, categories, 'installments'); // Alterado para installments para usar o filtro de despesa
     };
 
     const renderCurrentMonthData = () => {
@@ -867,7 +902,8 @@ const renderChart = () => {
                 const month = String(today.getMonth() + 1).padStart(2, '0');
                 currentMonthKey = `${year}-${month}`;
                 allMonthsData[currentMonthKey] = {
-                    fixedExpenses: [], monthlyExpenses: [], income: [], installments: [],
+                    fixedExpenses: [], monthlyExpenses: [], installments: [],
+                    income: [{ id: 'salary', name: 'Salário Mensal', value: 0 }], // Garante o salário inicial
                     categories: [], paymentMethods: []
                 };
             }
@@ -883,9 +919,10 @@ const renderChart = () => {
         const currentMonthData = getCurrentMonthData();
         renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
         renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
-        renderTable(currentMonthData.income, incomeTableBody, 'income');
+        // renderTable(currentMonthData.income, incomeTableBody, 'income'); // REMOVIDO: Não há mais tabela de entradas
         renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
         renderSummary();
+        renderChart(); // O gráfico é renderizado quando a aba é selecionada
         populateSelects(); // Assegura que os selects nos modais estejam atualizados
     };
 
@@ -941,29 +978,7 @@ const renderChart = () => {
         closeModal(document.getElementById('monthlyExpenseModal'));
     });
 
-    incomeForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = document.getElementById('incomeId').value;
-        const name = document.getElementById('incomeName').value;
-        const date = document.getElementById('incomeDate').value;
-        const categoryId = document.getElementById('incomeCategory').value;
-        const value = parseFloat(document.getElementById('incomeValue').value);
-
-        const currentMonthData = getCurrentMonthData();
-
-        if (id) {
-            const index = currentMonthData.income.findIndex(inc => inc.id === id);
-            if (index !== -1) {
-                currentMonthData.income[index] = { ...currentMonthData.income[index], name, date, categoryId, value };
-            }
-        } else {
-            const newIncome = { id: generateId(), name, date, categoryId, value };
-            currentMonthData.income.push(newIncome);
-        }
-        saveData();
-        renderCurrentMonthData();
-        closeModal(document.getElementById('incomeModal'));
-    });
+    // REMOVIDO: incomeForm.addEventListener (não é mais por formulário de múltiplos itens)
 
     installmentForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -1118,13 +1133,18 @@ const renderChart = () => {
         switch (type) {
             case 'fixedExpenses': modalId = 'fixedExpenseModal'; break;
             case 'monthlyExpenses': modalId = 'monthlyExpenseModal'; break;
-            case 'income': modalId = 'incomeModal'; break;
+            case 'income': modalId = 'incomeModal'; break; // 'income' é o tipo de dado, não o modal
             case 'installments': modalId = 'installmentModal'; break;
             case 'category': modalId = 'categoryModal'; break;
             case 'paymentMethod': modalId = 'paymentMethodModal'; break;
             default: return;
         }
-        openModal(modalId, id, type);
+        // Para o novo modal de salário, o type é 'incomeInput' mas o modal é 'incomeInputModal'
+        if (type === 'incomeInput') { // Adicionado para o novo modal de salário
+            openModal('incomeInputModal', id, type); // Passa o ID e tipo para openModal
+        } else {
+            openModal(modalId, id, type);
+        }
     };
 
     window.deleteItem = (id, type) => {
@@ -1137,7 +1157,7 @@ const renderChart = () => {
                     const isCategoryInUse = Object.values(allMonthsData).some(monthData => {
                         return monthData.fixedExpenses.some(exp => exp.categoryId === id) ||
                                monthData.monthlyExpenses.some(exp => exp.categoryId === id) ||
-                               monthData.income.some(inc => inc.categoryId === id) ||
+                               // monthData.income.some(inc => inc.categoryId === id) || // REMOVIDO: Não há mais múltiplos itens de income
                                monthData.installments.some(inst => inst.categoryId === id);
                     });
                     if (isCategoryInUse) {
