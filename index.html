@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle Financeiro Pessoal</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;60n0;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- ADICIONE ESTA LINHA PARA FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -172,11 +171,9 @@
             </div>
         </section>
 
-        <!-- SEÇÃO DE AÇÕES RÁPIDAS (AGORA UMA ABA COMPLETA) -->
         <section id="quick-actions" class="tab-content">
             <h2>Ações Rápidas</h2>
-            <div class="action-buttons-grid"> <!-- NOVA CLASSE PARA O GRID -->
-                <!-- PRIMEIRA LINHA -->
+            <div class="action-buttons-grid">
                 <button class="action-grid-button" data-modal="categoryModal">
                     <i class="fas fa-folder"></i>
                     <span>Gerenciar Categorias</span>
@@ -189,7 +186,6 @@
                     <i class="fas fa-money-bill-wave"></i>
                     <span>Inserir Salário</span>
                 </button>
-                <!-- SEGUNDA LINHA -->
                 <button class="action-grid-button" id="exportData">
                     <i class="fas fa-file-upload"></i>
                     <span>Exportar Dados</span>
@@ -263,6 +259,35 @@
             </form>
         </div>
     </div>
+
+    <!-- NOVO MODAL PARA SELECIONAR MÊS/ANO AO ADICIONAR NOVO MÊS -->
+    <div id="addMonthSelectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Adicionar Novo Mês</h2>
+            <form id="addMonthSelectionForm">
+                <label for="selectNewMonthYear">Ano:</label>
+                <select id="selectNewMonthYear" required></select>
+                <label for="selectNewMonthMonth">Mês:</label>
+                <select id="selectNewMonthMonth" required>
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+                <button type="submit">Criar Mês</button>
+            </form>
+        </div>
+    </div>
+    <!--------------------------------------------------------------->
 
     <div id="installmentModal" class="modal">
         <div class="modal-content">
