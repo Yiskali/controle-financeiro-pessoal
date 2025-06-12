@@ -36,8 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modais
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
-    const addButtons = document.querySelectorAll('.add-button'); // Botões que abrem modais (inclui novos no HTML)
-    // quickActionButtons NÃO É MAIS NECESSÁRIO como um listener separado se todos os botões de ação rápida têm add-button
+    // addButtons agora vai pegar todos os botões que tem a classe 'add-button' E 'action-grid-button'
+    // Como os botões de ação rápida agora têm uma classe diferente ('action-grid-button'),
+    // a forma de ativá-los mudará um pouco.
+    // addButtons.forEach(button => { button.addEventListener('click', ... } continuará funcionando para .add-button
+    // Os botões de Ações Rápidas terão um novo listener para '.action-grid-button'
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
@@ -47,10 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryForm = document.getElementById('categoryForm');
     const paymentMethodForm = document.getElementById('paymentMethodForm');
     // Novo Formulário e Botão para Salário Mensal
-    const openIncomeModalButton = document.getElementById('openIncomeModalButton'); // NOVO BOTÃO
-    const incomeInputModal = document.getElementById('incomeInputModal'); // NOVO MODAL
-    const incomeInputForm = document.getElementById('incomeInputForm'); // NOVO FORMULÁRIO
-    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue'); // NOVO CAMPO DE VALOR
+    const openIncomeModalButton = document.getElementById('openIncomeModalButton'); // NOVO BOTÃO SALÁRIO
+    const incomeInputModal = document.getElementById('incomeInputModal'); // NOVO MODAL SALÁRIO
+    const incomeInputForm = document.getElementById('incomeInputForm'); // NOVO FORMULÁRIO SALÁRIO
+    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue'); // NOVO CAMPO DE VALOR SALÁRIO
 
     // Campos de seleção para categorias e formas de pagamento
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
@@ -119,8 +122,18 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.values(allMonthsData).forEach(monthData => {
                 // Assegura que income é sempre um array e tem um item 'salary'
                 if (!monthData.income || !Array.isArray(monthData.income) || !monthData.income.some(item => item.id === 'salary')) {
-                    monthData.income = [{ id: 'salary', name: 'Salário Mensal', value: 0 }];
+                    // Se income não existe ou não tem salário, recria ou adiciona o salário padrão
+                    const existingSalary = monthData.income && monthData.income.find(i => i.id === 'salary');
+                    monthData.income = [{ id: 'salary', name: 'Salário Mensal', value: existingSalary ? existingSalary.value : 0 }];
+                } else {
+                    // Se já existe um array income, mas pode ter itens antigos que não são o salário único, filtra.
+                    // Para garantir que income seja *apenas* o salário.
+                    monthData.income = monthData.income.filter(item => item.id === 'salary');
+                    if (monthData.income.length === 0) { // Se por algum motivo o filtro zerou (ex: id diferente)
+                        monthData.income = [{ id: 'salary', name: 'Salário Mensal', value: 0 }];
+                    }
                 }
+
                 // Garante que as outras propriedades da categoria/pm existam
                 monthData.categories = monthData.categories.map(cat => ({
                     id: cat.id,
@@ -882,7 +895,6 @@ document.addEventListener('DOMContentLoaded', () => {
         populateSelect(fixedExpenseCategorySelect, categories, 'fixedExpenses'); // Passando o tipo de array de despesa
         populateSelect(monthlyExpensePaymentMethodSelect, paymentMethods, 'paymentMethod');
         populateSelect(monthlyExpenseCategorySelect, categories, 'monthlyExpenses'); // Passando o tipo de array de despesa
-        // populateSelect(incomeCategorySelect, categories, 'income'); // REMOVIDO: Não há mais seleção de categoria para o salário único
         populateSelect(installmentPaymentMethodSelect, paymentMethods, 'paymentMethod');
         populateSelect(installmentCategorySelect, categories, 'installments'); // Passando o tipo de array de despesa
     };
@@ -918,7 +930,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentMonthData = getCurrentMonthData();
         renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
         renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
-        // renderTable(currentMonthData.income, incomeTableBody, 'income'); // REMOVIDO: Não há mais tabela de entradas
         renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
         renderSummary();
         renderChart(); // O gráfico é renderizado quando a aba é selecionada
@@ -976,8 +987,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         closeModal(document.getElementById('monthlyExpenseModal'));
     });
-
-    // REMOVIDO: incomeForm.addEventListener (não é mais por formulário de múltiplos itens)
 
     installmentForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -1132,7 +1141,6 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (type) {
             case 'fixedExpenses': modalId = 'fixedExpenseModal'; break;
             case 'monthlyExpenses': modalId = 'monthlyExpenseModal'; break;
-            // case 'income': modalId = 'incomeInputModal'; break; // 'income' é o tipo de dado, não o modal, e agora é um modal específico
             case 'installments': modalId = 'installmentModal'; break;
             case 'category': modalId = 'categoryModal'; break;
             case 'paymentMethod': modalId = 'paymentMethodModal'; break;
@@ -1157,7 +1165,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const isCategoryInUse = Object.values(allMonthsData).some(monthData => {
                         return monthData.fixedExpenses.some(exp => exp.categoryId === id) ||
                                monthData.monthlyExpenses.some(exp => exp.categoryId === id) ||
-                               // monthData.income.some(inc => inc.categoryId === id) || // Não há mais múltiplos itens de income
                                monthData.installments.some(inst => inst.categoryId === id);
                     });
                     if (isCategoryInUse) {
