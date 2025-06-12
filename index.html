@@ -23,7 +23,7 @@
         <button class="tab-button active" data-tab="summary">Resumo</button>
         <button class="tab-button" data-tab="fixed-expenses">Fixos</button>
         <button class="tab-button" data-tab="monthly-expenses">Gastos do Mês</button>
-        <button class="tab-button" data-tab="income">Entradas</button>
+        <!-- ABA 'ENTRADAS' REMOVIDA AQUI -->
         <button class="tab-button" data-tab="installments">Compras Parceladas</button>
         <button class="tab-button" data-tab="chart">Gráfico</button>
     </nav>
@@ -42,22 +42,24 @@
                 <div class="card" style="background-color: #A78C74;">
                     <h3>Saldo Atual</h3>
                     <p id="currentBalanceSummary" class="balance-positive">R$ 0,00</p>
-               
                 </div>
-           <div class="secondary-summary-cards">
+            </div>
+            <div class="secondary-summary-cards">
+                <!-- CARDS DE SALDO REGULAR -->
                 <div class="card">
                     <h3>Total Gasto Regular</h3>
                     <p id="totalSpentRegularSummary">R$ 0,00</p>
                 </div>
-                <div class="card" style="background-color: var(--terracotta);"> <!-- Cor para Saldo Regular -->
+                <div class="card" style="background-color: var(--terracotta);">
                     <h3>Saldo Regular</h3>
                     <p id="currentRegularBalanceSummary" class="balance-positive">R$ 0,00</p>
                 </div>
+                <!-- CARDS DE SALDO VALES -->
                 <div class="card">
                     <h3>Total Gasto Vales</h3>
                     <p id="totalSpentVouchersSummary">R$ 0,00</p>
                 </div>
-                <div class="card" style="background-color: var(--olive-green);"> <!-- Cor para Saldo Vales -->
+                <div class="card" style="background-color: var(--olive-green);">
                     <h3>Saldo Vales</h3>
                     <p id="currentVoucherBalanceSummary" class="balance-positive">R$ 0,00</p>
                 </div>
@@ -76,7 +78,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                        <!-- Categorias preenchidas via JS -->
+                    </tbody>
                 </table>
             </div>
 
@@ -92,7 +95,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                        <!-- Formas de pagamento preenchidas via JS -->
+                    </tbody>
                 </table>
             </div>
         </section>
@@ -112,7 +116,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- Gastos fixos preenchidos via JS -->
+                </tbody>
             </table>
         </section>
 
@@ -131,27 +136,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- Gastos do mês preenchidos via JS -->
+                </tbody>
             </table>
         </section>
 
-        <section id="income" class="tab-content">
-            <h2>Entradas</h2>
-            <button class="add-button" data-modal="incomeModal">Adicionar Entrada</button>
-            <table id="incomeTable">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Data</th>
-                        <th>Categoria</th>
-                        <th>Valor</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
-        </section>
+        <!-- SEÇÃO 'ENTRADAS' REMOVIDA AQUI -->
+        <!-- <section id="income" class="tab-content">...</section> -->
 
         <section id="installments" class="tab-content">
             <h2>Compras Parceladas</h2>
@@ -170,7 +161,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- Parcelas preenchidas via JS -->
+                </tbody>
             </table>
         </section>
 
@@ -182,19 +174,23 @@
         </section>
     </main>
 
-    <section class="quick-actions">
-        <h2>Ações Rápidas</h2>
-        <div class="action-buttons">
-            <button class="add-button" data-modal="categoryModal">Gerenciar Categorias</button>
-            <button class="add-button" data-modal="paymentMethodModal">Gerenciar Formas de Pagamento</button>
-            <button id="exportData">Exportar Dados</button>
-            <input type="file" id="importDataInput" accept=".json" style="display: none;">
-            <button id="importDataButton">Importar Dados</button>
-            <button id="clearTransactionalDataButton">Limpar Dados Transacionais</button>
-
-        </div>
+    <!-- NOVA SEÇÃO 'AÇÕES RÁPIDAS' COMO UM MENU DETALHES/RESUMO -->
+    <section class="quick-actions-container">
+        <details>
+            <summary><h2>Ações Rápidas</h2></summary>
+            <div class="action-buttons">
+                <button class="add-button" data-modal="categoryModal">Gerenciar Categorias</button>
+                <button class="add-button" data-modal="paymentMethodModal">Gerenciar Formas de Pagamento</button>
+                <button id="openIncomeModalButton" data-modal="incomeInputModal">Inserir Salário</button> <!-- NOVO BOTÃO SALÁRIO -->
+                <button id="exportData">Exportar Dados</button>
+                <input type="file" id="importDataInput" accept=".json" style="display: none;">
+                <button id="importDataButton">Importar Dados</button>
+                <button id="clearTransactionalDataButton">Limpar Dados Transacionais</button>
+            </div>
+        </details>
     </section>
 
+    <!-- Modals -->
     <div id="fixedExpenseModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -237,21 +233,15 @@
         </div>
     </div>
 
-    <div id="incomeModal" class="modal">
+    <!-- NOVO MODAL PARA INSERIR SALÁRIO MENAL (ENTRADA ÚNICA) -->
+    <div id="incomeInputModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <h2>Adicionar/Editar Entrada</h2>
-            <form id="incomeForm">
-                <input type="hidden" id="incomeId">
-                <label for="incomeName">Nome:</label>
-                <input type="text" id="incomeName" required>
-                <label for="incomeDate">Data:</label>
-                <input type="date" id="incomeDate" required>
-                <label for="incomeCategory">Categoria:</label>
-                <select id="incomeCategory" required></select>
-                <label for="incomeValue">Valor:</label>
-                <input type="number" id="incomeValue" step="0.01" required>
-                <button type="submit">Salvar</button>
+            <h2>Inserir Salário Mensal</h2>
+            <form id="incomeInputForm">
+                <label for="monthlySalaryValue">Valor do Salário:</label>
+                <input type="number" id="monthlySalaryValue" step="0.01" required>
+                <button type="submit">Salvar Salário</button>
             </form>
         </div>
     </div>
@@ -273,7 +263,7 @@
                 <label for="installmentCategory">Categoria:</label>
                 <select id="installmentCategory" required></select>
                 <label for="installmentValue">Valor por Parcela:</label>
-                <input type="number" id="installmentValue" step="0.01" required>
+                <input type="number" id="installmentValue" step="00.01" required>
                 <button type="submit">Salvar</button>
             </form>
         </div>
@@ -296,7 +286,7 @@
                 </select>
                 <div id="expectedExpenseDiv" style="display: none;">
                     <label for="categoryExpectedExpense">Expectativa de Gasto:</label>
-                    <input type="number" id="categoryExpectedExpense" step="0.01">
+                    <input type="number" id="categoryExpectedExpense" step="00.01">
                 </div>
                 <button type="submit">Adicionar/Atualizar Categoria</button>
             </form>
@@ -313,17 +303,14 @@
                 <input type="hidden" id="paymentMethodId">
                 <label for="paymentMethodName">Nome:</label>
                 <input type="text" id="paymentMethodName" required>
-    
                 <label for="paymentMethodColor">Cor:</label>
                 <input type="color" id="paymentMethodColor" value="#cccccc">
-    
                 <div id="initialBalanceDiv" style="display: none;">
                     <label for="paymentMethodInitialBalance">Saldo Inicial (para vales):</label>
-                    <input type="number" id="paymentMethodInitialBalance" step="0.01">
+                    <input type="number" id="paymentMethodInitialBalance" step="00.01">
                 </div>
                 <button type="submit">Adicionar/Atualizar Forma de Pagamento</button>
             </form>
-            
             <h3>Formas de Pagamento Existentes:</h3>
             <ul id="paymentMethodList"></ul>
         </div>
