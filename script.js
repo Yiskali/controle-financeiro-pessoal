@@ -228,33 +228,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const navigateMonth = (direction) => {
-        const [currentYear, currentMonth] = currentMonthKey.split('-').map(Number);
-        let newDate = new Date(currentYear, currentMonth - 1, 1);
+        // Obter todas as chaves de mês existentes, ordenadas
+        const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
+            const [yearA, monthA] = a.split('-').map(Number);
+            const [yearB, monthB] = b.split('-').map(Number);
+            if (yearA !== yearB) return yearA - yearB;
+            return monthA - monthB;
+        });
 
+        // Encontrar o índice do mês atual na lista ordenada
+        const currentIndex = sortedMonths.indexOf(currentMonthKey);
+        let newIndex;
+
+        // Calcular o novo índice com base na direção
         if (direction === 'prev') {
-            newDate.setMonth(newDate.getMonth() - 1);
+            newIndex = currentIndex - 1;
+        } else { // 'next'
+            newIndex = currentIndex + 1;
+        }
+
+        // Verificar se o novo índice está dentro dos limites dos meses existentes
+        if (newIndex >= 0 && newIndex < sortedMonths.length) {
+            // Se o mês existe, navega para ele
+            currentMonthKey = sortedMonths[newIndex];
         } else {
-            newDate.setMonth(newDate.getMonth() + 1);
+            // Se o usuário tentou navegar além do primeiro ou último mês existente, exibe um aviso
+            alert('Ops! Não há mais meses para navegar.');
+            return; // Interrompe a função, não salva nem renderiza
         }
 
-        const newYear = newDate.getFullYear();
-        const newMonth = String(newDate.getMonth() + 1).padStart(2, '0');
-        const newMonthKey = `${newYear}-${newMonth}`;
-
-        if (!allMonthsData[newMonthKey]) {
-            // Se o mês não existe, cria ele (sem copiar dados, exceto categorias e formas de pagamento)
-            const currentMonthData = getCurrentMonthData();
-            allMonthsData[newMonthKey] = {
-                fixedExpenses: [],
-                monthlyExpenses: [],
-                // Garante que o salário mensal também esteja lá ao criar um novo mês
-                income: [{ id: 'salary', name: 'Salário Mensal', value: (currentMonthData && currentMonthData.income.find(i => i.id === 'salary')?.value) || 0 }],
-                installments: [], // Parcelas não são copiadas aqui, elas migram
-                categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
-                paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
-            };
-        }
-        currentMonthKey = newMonthKey;
+        // Salvar, atualizar o seletor de mês e renderizar a UI para o novo mês
         saveData();
         updateMonthSelect();
         renderCurrentMonthData();
