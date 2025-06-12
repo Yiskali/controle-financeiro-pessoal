@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modais
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
+    const addButtons = document.querySelectorAll('.add-button');
     // addButtons agora vai pegar todos os botões que tem a classe 'add-button' E 'action-grid-button'
     // Como os botões de ação rápida agora têm uma classe diferente ('action-grid-button'),
     // a forma de ativá-los mudará um pouco.
