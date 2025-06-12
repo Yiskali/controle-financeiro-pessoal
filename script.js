@@ -726,71 +726,73 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    
+const renderChart = () => {
+    const currentMonthData = getCurrentMonthData();
+    if (!currentMonthData) return;
 
-    const renderChart = () => {
-        const currentMonthData = getCurrentMonthData();
-        if (!currentMonthData) return;
+    const expenseCategories = currentMonthData.categories.filter(cat => cat.type === 'expense');
+    const categoryExpenses = {};
 
-        const expenseCategories = currentMonthData.categories.filter(cat => cat.type === 'expense');
-        const categoryExpenses = {};
+    expenseCategories.forEach(cat => categoryExpenses[cat.id] = 0);
 
-        expenseCategories.forEach(cat => categoryExpenses[cat.id] = 0);
+    const allExpenses = [
+        ...currentMonthData.fixedExpenses,
+        ...currentMonthData.monthlyExpenses,
+        ...currentMonthData.installments.filter(inst => inst.status === 'Ativa')
+    ];
 
-        const allExpenses = [
-            ...currentMonthData.fixedExpenses,
-            ...currentMonthData.monthlyExpenses,
-            ...currentMonthData.installments.filter(inst => inst.status === 'Ativa')
-        ];
-
-        allExpenses.forEach(exp => {
-            if (exp.categoryId && categoryExpenses.hasOwnProperty(exp.categoryId)) {
-                categoryExpenses[exp.categoryId] += (exp.value || exp.valuePerInstallment);
-            }
-        });
-
-        const labels = expenseCategories.map(cat => cat.name);
-        const data = expenseCategories.map(cat => categoryExpenses[cat.id]);
-        const backgroundColors = expenseCategories.map(cat => cat.color || '#cccccc');
-
-        const ctx = document.getElementById('expensesChart').getContext('2d');
-
-        if (expensesChart) {
-            expensesChart.destroy();
+    allExpenses.forEach(exp => {
+        if (exp.categoryId && categoryExpenses.hasOwnProperty(exp.categoryId)) {
+            categoryExpenses[exp.categoryId] += (exp.value || exp.valuePerInstallment);
         }
+    });
 
-        expensesChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: backgroundColors,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    label += formatCurrency(context.parsed);
-                                }
-                                return label;
+    const labels = expenseCategories.map(cat => cat.name);
+    const data = expenseCategories.map(cat => categoryExpenses[cat.id]);
+    const backgroundColors = expenseCategories.map(cat => cat.color || '#cccccc');
+
+    const ctx = document.getElementById('expensesChart').getContext('2d');
+
+    if (expensesChart) {
+        expensesChart.destroy();
+    }
+
+    expensesChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
                             }
+                            if (context.parsed !== null) {
+                                label += formatCurrency(context.parsed);
+                            }
+                            return label;
                         }
                     }
                 }
-            });
-    };
+            }
+        }
+    }); // O PARÊNTESE DE FECHAMENTO AQUI ERA O FIM DA CHAMADA Chart()
+}; // Este é o fechamento da função renderChart()
+    
 
     const renderCategoryList = () => {
         categoryList.innerHTML = '';
