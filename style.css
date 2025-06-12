@@ -377,12 +377,12 @@ table td button:hover {
 
 .action-buttons-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Colunas flexíveis, mínimo 180px */
+    grid-template-columns: repeat(3, 1fr); /* FORÇA 3 COLUNAS DE TAMANHO IGUAL */
     gap: 25px; /* Espaçamento entre os botões */
     justify-items: center; /* Centraliza itens na grade */
     align-items: start; /* Alinha itens ao topo em suas células */
-    max-width: 900px; /* Limita a largura da grade de botões */
-    margin: 0 auto; /* Centraliza a grade de botões */
+    max-width: 900px; /* Limita a largura da grade de botões para centralizar */
+    margin: 0 auto; /* Centraliza a grade de botões na página */
 }
 
 .action-grid-button {
@@ -390,8 +390,9 @@ table td button:hover {
     flex-direction: column; /* Ícone acima do texto */
     align-items: center; /* Centraliza horizontalmente ícone e texto */
     justify-content: center; /* Centraliza verticalmente */
-    width: 180px; /* Largura fixa para botões quadrados */
-    height: 180px; /* Altura fixa para botões quadrados */
+    width: 100%; /* Ocupa 100% da largura da célula da grade */
+    aspect-ratio: 1 / 1; /* Mantém a proporção de 1:1 (quadrado) */
+    padding: 15px; /* Adiciona padding interno */
     border-radius: 15px; /* Bordas mais arredondadas */
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
@@ -401,6 +402,7 @@ table td button:hover {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para destaque */
+    text-decoration: none; /* Garante que links dentro de botões não tenham sublinhado */
 }
 
 .action-grid-button i {
@@ -412,9 +414,10 @@ table td button:hover {
 .action-grid-button span {
     text-align: center;
     line-height: 1.2;
+    display: block; /* Garante que o span ocupe a própria linha */
 }
 
-/* Cores específicas para cada tipo de botão */
+/* Cores específicas para cada tipo de botão (usando nth-child para a ordem) */
 #quick-actions .action-buttons-grid button:nth-child(1) { /* Gerenciar Categorias */
     background-color: var(--action-button-category-bg);
 }
@@ -452,7 +455,14 @@ table td button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Responsividade Básica */
+/* Responsividade para a Grade de Botões */
+@media (max-width: 992px) { /* Em telas médias, 2 colunas */
+    .action-buttons-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 600px; /* Ajusta a largura máxima */
+    }
+}
+
 @media (max-width: 768px) {
     .header h1 {
         font-size: 1.8rem;
@@ -492,15 +502,16 @@ table td button:hover {
     }
     
     .action-buttons-grid {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Reduz tamanho mínimo em mobile */
-        gap: 15px;
+        grid-template-columns: repeat(1, 1fr); /* 1 coluna em mobile */
+        max-width: 300px; /* Largura para um único botão centralizado */
     }
     .action-grid-button {
-        width: 140px;
-        height: 140px;
+        width: 100%; /* Ocupa a largura total da célula (agora 100%) */
+        height: 120px; /* Altura um pouco menor em mobile */
+        padding: 10px;
     }
     .action-grid-button i {
-        font-size: 2.5rem;
+        font-size: 2rem;
     }
     .action-grid-button span {
         font-size: 0.9rem;
