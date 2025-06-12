@@ -36,12 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modais
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
-    const addButtons = document.querySelectorAll('.add-button');
-    // addButtons agora vai pegar todos os botões que tem a classe 'add-button' E 'action-grid-button'
-    // Como os botões de ação rápida agora têm uma classe diferente ('action-grid-button'),
-    // a forma de ativá-los mudará um pouco.
-    // addButtons.forEach(button => { button.addEventListener('click', ... } continuará funcionando para .add-button
-    // Os botões de Ações Rápidas terão um novo listener para '.action-grid-button'
+    const addButtons = document.querySelectorAll('.add-button'); // Botões que abrem modais (para gastos fixos/mensais/parcelas)
+    // Adicionado seletor para os novos botões da grade de ações rápidas
+    const actionGridButtons = document.querySelectorAll('.action-buttons-grid .action-grid-button');
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
@@ -51,10 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryForm = document.getElementById('categoryForm');
     const paymentMethodForm = document.getElementById('paymentMethodForm');
     // Novo Formulário e Botão para Salário Mensal
-    const openIncomeModalButton = document.getElementById('openIncomeModalButton'); // NOVO BOTÃO SALÁRIO
-    const incomeInputModal = document.getElementById('incomeInputModal'); // NOVO MODAL SALÁRIO
-    const incomeInputForm = document.getElementById('incomeInputForm'); // NOVO FORMULÁRIO SALÁRIO
-    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue'); // NOVO CAMPO DE VALOR SALÁRIO
+    const openIncomeModalButton = document.getElementById('openIncomeModalButton'); // NOVO BOTÃO
+    const incomeInputModal = document.getElementById('incomeInputModal'); // NOVO MODAL
+    const incomeInputForm = document.getElementById('incomeInputForm'); // NOVO FORMULÁRIO
+    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue'); // NOVO CAMPO DE VALOR
 
     // Campos de seleção para categorias e formas de pagamento
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
@@ -458,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Event listeners para abrir modais
+    // Botões que abrem modais genéricos (como add gasto fixo, add gasto mensal, add parcela)
     addButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             const modalId = e.target.dataset.modal;
@@ -468,6 +466,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Listener para o novo botão 'Inserir Salário'
     openIncomeModalButton.addEventListener('click', () => {
         openModal('incomeInputModal', null, 'incomeInput'); // Abre o modal de salário
+    });
+
+    // Listener para os botões da grade de Ações Rápidas (Gerenciar Categorias, Gerenciar Formas de Pagamento, Exportar, Importar, Limpar)
+    // Usamos querySelectorAll para pegar todos os botões com a classe 'action-grid-button'
+    actionGridButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const modalId = e.target.closest('.action-grid-button').dataset.modal; // Pega o data-modal do botão clicado
+            // Trata casos especiais que não usam data-modal para abrir modais
+            if (e.target.closest('#exportData')) {
+                // Lógica de exportação (já existe um listener para exportDataBtn)
+                // Não precisa chamar openModal, o listener original de exportDataBtn já cuida disso
+                document.getElementById('exportData').click(); // Dispara o clique no botão original
+            } else if (e.target.closest('#importDataButton')) {
+                document.getElementById('importDataButton').click(); // Dispara o clique no botão original
+            } else if (e.target.closest('#clearTransactionalDataButton')) {
+                document.getElementById('clearTransactionalDataButton').click(); // Dispara o clique no botão original
+            } else if (modalId) {
+                // Para botões que abrem modais (Gerenciar Categorias, Gerenciar Formas de Pagamento)
+                openModal(modalId);
+            }
+        });
     });
 
 
