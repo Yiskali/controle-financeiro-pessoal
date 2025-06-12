@@ -38,7 +38,7 @@
 }
 
 body {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Rajdhani', sans-serif; /* GARANTINDO A FONTE AQUI */
     background-color: var(--background-color);
     color: var(--dark-text);
     line-height: 1.6;
