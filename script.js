@@ -353,24 +353,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     break;
+                    
                 case 'paymentMethod':
                     item = currentMonthData.paymentMethods.find(pm => pm.id === itemId);
-                    if (item) {
+                    if (item) { // Se estamos EDITANDO um item existente
                         document.getElementById('paymentMethodId').value = item.id;
                         document.getElementById('paymentMethodName').value = item.name;
-                        paymentMethodColorInput.value = pm.color || '#cccccc'; // Preencher campo de cor
-                        // Verifica se é um vale pelo nome para exibir/esconder o saldo
-                        if (pm.name.toLowerCase().includes('vale') || pm.name.toLowerCase().includes('ticket')) {
+                        paymentMethodColorInput.value = item.color || '#cccccc'; // Preencher campo de cor com 'item.color'
+                        
+                        // Determinar visibilidade do saldo com base no nome do item existente
+                        if (item.name.toLowerCase().includes('vale') || item.name.toLowerCase().includes('ticket')) {
                             initialBalanceDiv.style.display = 'block';
                             document.getElementById('paymentMethodInitialBalance').value = item.initialBalance || '';
                         } else {
                             initialBalanceDiv.style.display = 'none';
                             document.getElementById('paymentMethodInitialBalance').value = '';
                         }
-                    } else { // Se for adicionar uma nova forma de pagamento (item é null)
-                        // Esconder o campo de saldo por padrão até que o nome seja digitado
-                        initialBalanceDiv.style.display = 'none';
-                        document.getElementById('paymentMethodInitialBalance').value = '';
+                    } else { // Se estamos ADICIONANDO um NOVO item (itemId é null ou item não encontrado)
+                        // Para um novo item, o campo de saldo inicial deve estar escondido por padrão.
+                        // Ele só aparecerá dinamicamente quando o usuário digitar 'vale' no campo de nome (tratado pelo input.addEventListener).
+                        document.getElementById('paymentMethodId').value = ''; // Garante que o ID esteja limpo para nova adição
+                        document.getElementById('paymentMethodName').value = ''; // Limpa o nome
+                        paymentMethodColorInput.value = '#cccccc'; // Define cor padrão para novo item
+                        initialBalanceDiv.style.display = 'none'; // Esconde o campo de saldo
+                        document.getElementById('paymentMethodInitialBalance').value = ''; // Limpa o valor do saldo
                     }
                     break;
             }
