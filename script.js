@@ -332,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('monthlyExpenseValue').value = item.value;
                     }
                     break;
-                // REMOVIDO: Case para entradas via tabela (income)
                 case 'installments':
                     item = currentMonthData.installments.find(inst => inst.id === itemId);
                     if (item) {
@@ -880,12 +879,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         populateSelect(fixedExpensePaymentMethodSelect, paymentMethods, 'paymentMethod');
-        populateSelect(fixedExpenseCategorySelect, categories, 'fixedExpenses'); // Alterado para fixedExpenses para usar o filtro de despesa
+        populateSelect(fixedExpenseCategorySelect, categories, 'fixedExpenses'); // Passando o tipo de array de despesa
         populateSelect(monthlyExpensePaymentMethodSelect, paymentMethods, 'paymentMethod');
-        populateSelect(monthlyExpenseCategorySelect, categories, 'monthlyExpenses'); // Alterado para monthlyExpenses para usar o filtro de despesa
+        populateSelect(monthlyExpenseCategorySelect, categories, 'monthlyExpenses'); // Passando o tipo de array de despesa
         // populateSelect(incomeCategorySelect, categories, 'income'); // REMOVIDO: Não há mais seleção de categoria para o salário único
         populateSelect(installmentPaymentMethodSelect, paymentMethods, 'paymentMethod');
-        populateSelect(installmentCategorySelect, categories, 'installments'); // Alterado para installments para usar o filtro de despesa
+        populateSelect(installmentCategorySelect, categories, 'installments'); // Passando o tipo de array de despesa
     };
 
     const renderCurrentMonthData = () => {
@@ -1133,15 +1132,16 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (type) {
             case 'fixedExpenses': modalId = 'fixedExpenseModal'; break;
             case 'monthlyExpenses': modalId = 'monthlyExpenseModal'; break;
-            case 'income': modalId = 'incomeModal'; break; // 'income' é o tipo de dado, não o modal
+            // case 'income': modalId = 'incomeInputModal'; break; // 'income' é o tipo de dado, não o modal, e agora é um modal específico
             case 'installments': modalId = 'installmentModal'; break;
             case 'category': modalId = 'categoryModal'; break;
             case 'paymentMethod': modalId = 'paymentMethodModal'; break;
             default: return;
         }
-        // Para o novo modal de salário, o type é 'incomeInput' mas o modal é 'incomeInputModal'
-        if (type === 'incomeInput') { // Adicionado para o novo modal de salário
-            openModal('incomeInputModal', id, type); // Passa o ID e tipo para openModal
+        // Para o novo modal de salário, o type é 'incomeInput' (usado no openModalButton)
+        // Então, ajustamos aqui para direcionar para o modal correto se o tipo for o salário
+        if (type === 'incomeInput') {
+             openModal('incomeInputModal', id, type);
         } else {
             openModal(modalId, id, type);
         }
@@ -1157,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const isCategoryInUse = Object.values(allMonthsData).some(monthData => {
                         return monthData.fixedExpenses.some(exp => exp.categoryId === id) ||
                                monthData.monthlyExpenses.some(exp => exp.categoryId === id) ||
-                               // monthData.income.some(inc => inc.categoryId === id) || // REMOVIDO: Não há mais múltiplos itens de income
+                               // monthData.income.some(inc => inc.categoryId === id) || // Não há mais múltiplos itens de income
                                monthData.installments.some(inst => inst.categoryId === id);
                     });
                     if (isCategoryInUse) {
@@ -1199,9 +1199,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             console.warn(`WARN: Installment ID ${id} was not found in any month or was already removed.`);
                         }
                     }
-                    else {
+                    else { // Para fixedExpenses, monthlyExpenses, income (agora só salary)
                         const currentMonthData = getCurrentMonthData();
-                        currentMonthData[type] = currentMonthData[type].filter(item => item.id !== id);
+                        // Para income, só permite 'salary' ser zerado, não excluído
+                        if (type === 'income' && id === 'salary') {
+                            let salaryItem = currentMonthData.income.find(i => i.id === 'salary');
+                            if (salaryItem) {
+                                salaryItem.value = 0;
+                                alert("Salário mensal zerado. Para excluí-lo completamente, use a função de Limpar Dados Transacionais.");
+                            }
+                        } else {
+                             // Para outros itens que podem ser excluídos (se income tivesse outros)
+                            currentMonthData[type] = currentMonthData[type].filter(item => item.id !== id);
+                        }
                     }
                     saveData();
                     renderCurrentMonthData();
