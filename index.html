@@ -23,9 +23,10 @@
         <button class="tab-button active" data-tab="summary">Resumo</button>
         <button class="tab-button" data-tab="fixed-expenses">Fixos</button>
         <button class="tab-button" data-tab="monthly-expenses">Gastos do Mês</button>
-        <!-- ABA 'ENTRADAS' REMOVIDA AQUI -->
         <button class="tab-button" data-tab="installments">Compras Parceladas</button>
         <button class="tab-button" data-tab="chart">Gráfico</button>
+        <!-- NOVA ABA DE AÇÕES RÁPIDAS -->
+        <button class="tab-button" data-tab="quick-actions">Ações Rápidas</button>
     </nav>
 
     <main class="container">
@@ -141,9 +142,6 @@
             </table>
         </section>
 
-        <!-- SEÇÃO 'ENTRADAS' REMOVIDA AQUI -->
-        <!-- <section id="income" class="tab-content">...</section> -->
-
         <section id="installments" class="tab-content">
             <h2>Compras Parceladas</h2>
             <button class="add-button" data-modal="installmentModal">Adicionar Compra Parcelada</button>
@@ -172,25 +170,24 @@
                 <canvas id="expensesChart"></canvas>
             </div>
         </section>
-    </main>
 
-    <!-- NOVA SEÇÃO 'AÇÕES RÁPIDAS' COMO UM MENU DETALHES/RESUMO -->
-    <section class="quick-actions-container">
-        <details>
-            <summary><h2>Ações Rápidas</h2></summary>
+        <!-- NOVA SEÇÃO DE AÇÕES RÁPIDAS (AGORA UMA ABA) -->
+        <section id="quick-actions" class="tab-content">
+            <h2>Ações Rápidas</h2>
             <div class="action-buttons">
                 <button class="add-button" data-modal="categoryModal">Gerenciar Categorias</button>
                 <button class="add-button" data-modal="paymentMethodModal">Gerenciar Formas de Pagamento</button>
-                <button id="openIncomeModalButton" data-modal="incomeInputModal">Inserir Salário</button> <!-- NOVO BOTÃO SALÁRIO -->
+                <button id="openIncomeModalButton">Inserir Salário</button> <!-- Botão Salário que abre modal -->
                 <button id="exportData">Exportar Dados</button>
                 <input type="file" id="importDataInput" accept=".json" style="display: none;">
                 <button id="importDataButton">Importar Dados</button>
                 <button id="clearTransactionalDataButton">Limpar Dados Transacionais</button>
             </div>
-        </details>
-    </section>
+        </section>
 
-    <!-- Modals -->
+    </main>
+
+    <!-- Modals (permanecem fora do main para sobrepor todo o conteúdo) -->
     <div id="fixedExpenseModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -233,7 +230,7 @@
         </div>
     </div>
 
-    <!-- NOVO MODAL PARA INSERIR SALÁRIO MENAL (ENTRADA ÚNICA) -->
+    <!-- MODAL PARA INSERIR SALÁRIO MENAL (ENTRADA ÚNICA) -->
     <div id="incomeInputModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -263,7 +260,7 @@
                 <label for="installmentCategory">Categoria:</label>
                 <select id="installmentCategory" required></select>
                 <label for="installmentValue">Valor por Parcela:</label>
-                <input type="number" id="installmentValue" step="00.01" required>
+                <input type="number" id="installmentValue" step="0.01" required>
                 <button type="submit">Salvar</button>
             </form>
         </div>
@@ -286,7 +283,7 @@
                 </select>
                 <div id="expectedExpenseDiv" style="display: none;">
                     <label for="categoryExpectedExpense">Expectativa de Gasto:</label>
-                    <input type="number" id="categoryExpectedExpense" step="00.01">
+                    <input type="number" id="categoryExpectedExpense" step="0.01">
                 </div>
                 <button type="submit">Adicionar/Atualizar Categoria</button>
             </form>
@@ -307,7 +304,7 @@
                 <input type="color" id="paymentMethodColor" value="#cccccc">
                 <div id="initialBalanceDiv" style="display: none;">
                     <label for="paymentMethodInitialBalance">Saldo Inicial (para vales):</label>
-                    <input type="number" id="paymentMethodInitialBalance" step="00.01">
+                    <input type="number" id="paymentMethodInitialBalance" step="0.01">
                 </div>
                 <button type="submit">Adicionar/Atualizar Forma de Pagamento</button>
             </form>
