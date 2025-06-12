@@ -117,9 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthData.paymentMethods = monthData.paymentMethods.map(pm => ({
                     id: pm.id,
                     name: pm.name,
-                    color: pm.color || '#cccccc', // Adicionado default color para formas de pagamento
-                    isVoucher: pm.isVoucher || false,
-                    initialBalance: pm.initialBalance || 0
+                    color: pm.color || '#cccccc',
+                    // IMPORTANTE: Re-avalia isVoucher e initialBalance com base no nome
+                    isVoucher: (pm.name && (pm.name.toLowerCase().includes('vale') || pm.name.toLowerCase().includes('ticket'))) || false,
+                    initialBalance: pm.initialBalance || 0 // Mantém o saldo se existir, senão 0
                 }));
             });
         } else {
@@ -358,16 +359,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('paymentMethodId').value = item.id;
                         document.getElementById('paymentMethodName').value = item.name;
                         paymentMethodColorInput.value = pm.color || '#cccccc'; // Preencher campo de cor
-                        if (pm.isVoucher) {
+                        // Verifica se é um vale pelo nome para exibir/esconder o saldo
+                        if (pm.name.toLowerCase().includes('vale') || pm.name.toLowerCase().includes('ticket')) {
                             initialBalanceDiv.style.display = 'block';
                             document.getElementById('paymentMethodInitialBalance').value = item.initialBalance || '';
                         } else {
                             initialBalanceDiv.style.display = 'none';
+                            document.getElementById('paymentMethodInitialBalance').value = '';
                         }
+                    } else { // Se for adicionar uma nova forma de pagamento (item é null)
+                        // Esconder o campo de saldo por padrão até que o nome seja digitado
+                        initialBalanceDiv.style.display = 'none';
+                        document.getElementById('paymentMethodInitialBalance').value = '';
                     }
                     break;
             }
+        } else if (modalId === 'paymentMethodModal') { // Se for um novo item, e o modal é de paymentMethod
+            // Ao abrir o modal para adicionar uma nova forma de pagamento, garanta que o campo de saldo esteja escondido
+            initialBalanceDiv.style.display = 'none';
+            document.getElementById('paymentMethodInitialBalance').value = '';
         }
+
         populateSelects(); // Popula os selects do modal (categorias e formas de pagamento)
 
         // IMPORTANTE: Dispara o evento change no categoryTypeSelect para que a visibilidade da expectativa seja atualizada
@@ -390,7 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Chamar renderCategoryList/renderPaymentMethodList aqui para atualizar a lista no modal
             if (modalId === 'categoryModal') {
                 renderCategoryList(); // Re-renderiza a lista de categorias no modal
-                // A linha expectedExpenseDiv.style.display = 'none'; FOI REMOVIDA AQUI
                 document.getElementById('categoryExpectedExpense').value = ''; // Limpa o valor
 
                 // IMPORTANTE: Dispara o evento change no categoryTypeSelect após o reset
@@ -400,6 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (modalId === 'paymentMethodModal') {
                 renderPaymentMethodList(); // Re-renderiza a lista de formas de pagamento no modal
+                // IMPORTANTE: Resetar também o campo de cor e esconder o saldo ao resetar
+                paymentMethodColorInput.value = '#cccccc'; // Reseta a cor para o padrão
                 initialBalanceDiv.style.display = 'none'; // Esconde o saldo ao resetar
                 document.getElementById('paymentMethodInitialBalance').value = ''; // Limpa o valor
             }
@@ -515,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allExpenses.forEach(exp => {
             const paymentMethod = currentMonthData.paymentMethods.find(pm => pm.id === exp.paymentMethodId);
             // Verifica se é um vale pelo nome do método de pagamento (contém "vale" ou "ticket")
-            if (paymentMethod && paymentMethod.isVoucher) {
+            if (paymentMethod && pm.isVoucher) { // Usar pm.isVoucher (já é avaliado no load/save)
                 totalVouchers += exp.value || exp.valuePerInstallment;
             } else {
                 totalRegular += exp.value || exp.valuePerInstallment;
@@ -1005,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         renderCategoryList(); // Mantém a lista atualizada dentro do modal
         populateSelects(); // Atualiza selects dos modais
-        // NOVA LINHA AQUI: Resetar o formulário de categoria para permitir nova adição
+        // Resetar o formulário de categoria para permitir nova adição
         resetForm('categoryModal');
     });
 
@@ -1047,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
         renderPaymentMethodList(); // Mantém a lista atualizada dentro do modal
         populateSelects(); // Atualiza selects dos modais
-        // NOVA LINHA AQUI: Resetar o formulário de forma de pagamento para permitir nova adição
+        // Resetar o formulário de forma de pagamento para permitir nova adição
         resetForm('paymentMethodModal');
     });
 
@@ -1061,7 +1074,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     paymentMethodNameInput.addEventListener('input', (e) => {
-        if (e.target.value.toLowerCase().includes('vale') || e.target.value.toLowerCase().includes('ticket')) {
+        // A lógica do 'input' agora também re-avalia o isVoucher e a visibilidade
+        const isVoucherDetected = e.target.value.toLowerCase().includes('vale') || e.target.value.toLowerCase().includes('ticket');
+        if (isVoucherDetected) {
             initialBalanceDiv.style.display = 'block';
         } else {
             initialBalanceDiv.style.display = 'none';
@@ -1085,10 +1100,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteItem = (id, type) => {
-        console.log(`Tentando excluir: ID=${id}, Tipo=${type}`); // Log para depuração
+        console.log(`Tentando excluir: ID=${id}, Tipo=${type}`);
         showConfirmModal(`Tem certeza que deseja excluir este item de ${type}?`, (confirmed) => {
             if (confirmed) {
-                console.log(`Confirmação recebida: SIM. Excluindo item ${id} do tipo ${type}.`); // Log para depuração
+                console.log(`Confirmação recebida: SIM. Excluindo item ${id} do tipo ${type}.`);
                 let canDelete = true;
                 if (type === 'category') {
                     const isCategoryInUse = Object.values(allMonthsData).some(monthData => {
@@ -1142,8 +1157,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     saveData();
                     renderCurrentMonthData();
-                    if (type === 'category') renderCategoryList(); // Re-renderiza a lista no modal de categorias
-                    if (type === 'paymentMethod') renderPaymentMethodList(); // Re-renderiza a lista no modal de formas de pagamento
+                    if (type === 'category') renderCategoryList();
+                    if (type === 'paymentMethod') renderPaymentMethodList();
                 }
             } else {
                 console.log("Confirmação recebida: NÃO. Exclusão cancelada.");
