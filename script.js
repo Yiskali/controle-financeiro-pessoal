@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthSelect = document.getElementById('monthSelect');
     const prevMonthBtn = document.getElementById('prevMonth');
     const nextMonthBtn = document.getElementById('nextMonth');
-    const addMonthBtn = document.getElementById('addMonth');
+    const addMonthBtn = document.getElementById('addMonth'); // Botão que agora abre o modal de seleção de mês/ano
     const exportDataBtn = document.getElementById('exportData');
     const importDataInput = document.getElementById('importDataInput');
     const importDataButton = document.getElementById('importDataButton');
@@ -17,10 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalIncomeSummary = document.getElementById('totalIncomeSummary');
     const totalExpensesSummary = document.getElementById('totalExpensesSummary');
     const currentBalanceSummary = document.getElementById('currentBalanceSummary');
-    // Renomeados
     const totalSpentRegularSummary = document.getElementById('totalSpentRegularSummary');
     const totalSpentVouchersSummary = document.getElementById('totalSpentVouchersSummary');
-    // Novos Cards de Saldo
     const currentRegularBalanceSummary = document.getElementById('currentRegularBalanceSummary');
     const currentVoucherBalanceSummary = document.getElementById('currentVoucherBalanceSummary');
 
@@ -30,35 +28,39 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tabelas
     const fixedExpensesTableBody = document.querySelector('#fixedExpensesTable tbody');
     const monthlyExpensesTableBody = document.querySelector('#monthlyExpensesTable tbody');
-    // const incomeTableBody = document.querySelector('#incomeTable tbody'); // REMOVIDO: Tabela de entradas não existe mais
     const installmentsTableBody = document.querySelector('#installmentsTable tbody');
 
     // Modais
     const modals = document.querySelectorAll('.modal');
     const closeButtons = document.querySelectorAll('.modal .close-button');
     const addButtons = document.querySelectorAll('.add-button'); // Botões que abrem modais (para gastos fixos/mensais/parcelas)
-    // Adicionado seletor para os novos botões da grade de ações rápidas
-    const actionGridButtons = document.querySelectorAll('.action-buttons-grid .action-grid-button');
+    const actionGridButtons = document.querySelectorAll('.action-buttons-grid .action-grid-button'); // Botões da grade de Ações Rápidas
 
     // Forms
     const fixedExpenseForm = document.getElementById('fixedExpenseForm');
     const monthlyExpenseForm = document.getElementById('monthlyExpenseForm');
-    // const incomeForm = document.getElementById('incomeForm'); // REMOVIDO: Formulário de entradas não existe mais
     const installmentForm = document.getElementById('installmentForm');
     const categoryForm = document.getElementById('categoryForm');
     const paymentMethodForm = document.getElementById('paymentMethodForm');
+
     // Novo Formulário e Botão para Salário Mensal
-    const openIncomeModalButton = document.getElementById('openIncomeModalButton'); // NOVO BOTÃO
-    const incomeInputModal = document.getElementById('incomeInputModal'); // NOVO MODAL
-    const incomeInputForm = document.getElementById('incomeInputForm'); // NOVO FORMULÁRIO
-    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue'); // NOVO CAMPO DE VALOR
+    const openIncomeModalButton = document.getElementById('openIncomeModalButton');
+    const incomeInputModal = document.getElementById('incomeInputModal');
+    const incomeInputForm = document.getElementById('incomeInputForm');
+    const monthlySalaryValueInput = document.getElementById('monthlySalaryValue');
+
+    // Elementos do NOVO Modal de Seleção de Mês/Ano
+    const addMonthSelectionModal = document.getElementById('addMonthSelectionModal');
+    const addMonthSelectionForm = document.getElementById('addMonthSelectionForm');
+    const selectNewMonthYear = document.getElementById('selectNewMonthYear');
+    const selectNewMonthMonth = document.getElementById('selectNewMonthMonth');
 
     // Campos de seleção para categorias e formas de pagamento
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
     const monthlyExpensePaymentMethodSelect = document.getElementById('monthlyExpensePaymentMethod');
     const monthlyExpenseCategorySelect = document.getElementById('monthlyExpenseCategory');
-    // const incomeCategorySelect = document.getElementById('incomeCategory'); // REMOVIDO: Categoria de entrada única
+    const incomeCategorySelect = document.getElementById('incomeCategory'); // Mantido para consistência, mas não usado diretamente para salário
     const installmentPaymentMethodSelect = document.getElementById('installmentPaymentMethod');
     const installmentCategorySelect = document.getElementById('installmentCategory');
     const categoryTypeSelect = document.getElementById('categoryType');
@@ -228,7 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const navigateMonth = (direction) => {
-        // Obter todas as chaves de mês existentes, ordenadas
         const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
             const [yearB, monthB] = b.split('-').map(Number);
@@ -236,28 +237,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return monthA - monthB;
         });
 
-        // Encontrar o índice do mês atual na lista ordenada
         const currentIndex = sortedMonths.indexOf(currentMonthKey);
         let newIndex;
 
-        // Calcular o novo índice com base na direção
         if (direction === 'prev') {
             newIndex = currentIndex - 1;
         } else { // 'next'
             newIndex = currentIndex + 1;
         }
 
-        // Verificar se o novo índice está dentro dos limites dos meses existentes
         if (newIndex >= 0 && newIndex < sortedMonths.length) {
-            // Se o mês existe, navega para ele
             currentMonthKey = sortedMonths[newIndex];
         } else {
-            // Se o usuário tentou navegar além do primeiro ou último mês existente, exibe um aviso
             alert('Ops! Não há mais meses para navegar.');
-            return; // Interrompe a função, não salva nem renderiza
+            return;
         }
 
-        // Salvar, atualizar o seletor de mês e renderizar a UI para o novo mês
         saveData();
         updateMonthSelect();
         renderCurrentMonthData();
@@ -270,47 +265,69 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCurrentMonthData();
     });
 
+    // ATUALIZADO: addMonthBtn agora abre o modal de seleção de mês/ano
     addMonthBtn.addEventListener('click', () => {
-        const today = new Date();
-        let year = today.getFullYear();
-        let month = today.getMonth() + 1;
-        let newMonthKey;
+        // Popula os seletores de ano e mês antes de abrir o modal
+        populateAddMonthSelects();
+        openModal('addMonthSelectionModal');
+    });
 
-        // Encontrar o próximo mês que ainda não existe
-        do {
-            month++;
-            if (month > 12) {
-                month = 1;
-                year++;
-            }
-            newMonthKey = `${year}-${String(month).padStart(2, '0')}`;
-        } while (allMonthsData[newMonthKey]);
+    // NOVO: Popula os seletores de ano e mês no modal de "Adicionar Novo Mês"
+    const populateAddMonthSelects = () => {
+        const currentYear = new Date().getFullYear();
+        selectNewMonthYear.innerHTML = ''; // Limpa opções antigas
 
-        // MENSAGEM DE CONFIRMAÇÃO ATUALIZADA AQUI:
-        const confirmCopy = confirm("Deseja copiar dados (exceto parcelas, que migram automaticamente) do mês atual para o novo mês?");
-
-        // APENAS PROSSEGUE SE O USUÁRIO CLICAR EM "OK" (confirmCopy é true)
-        if (confirmCopy) {
-            const currentMonthData = getCurrentMonthData();
-
-            allMonthsData[newMonthKey] = {
-                fixedExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.fixedExpenses.map(exp => ({ ...exp })))) : [],
-                monthlyExpenses: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
-                // Garante que o salário mensal também seja copiado
-                income: [{ id: 'salary', name: 'Salário Mensal', value: (currentMonthData && currentMonthData.income.find(i => i.id === 'salary')?.value) || 0 }],
-                installments: [], // Parcelas não são copiadas diretamente ao criar um novo mês, elas migram
-                categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
-                paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
-            };
-
-            currentMonthKey = newMonthKey;
-            saveData();
-            updateMonthSelect();
-            renderCurrentMonthData();
-            alert(`Mês ${new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long' })} / ${year} adicionado com sucesso!`);
-        } else {
-            console.log("Criação de novo mês cancelada pelo usuário.");
+        // Popula anos: do ano atual - 5 até o ano atual + 5
+        for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            selectNewMonthYear.appendChild(option);
         }
+        selectNewMonthYear.value = currentYear; // Seleciona o ano atual por padrão
+
+        // Seleciona o próximo mês após o mês atual (ou o primeiro se estiver no último)
+        const [currYear, currMonth] = currentMonthKey.split('-').map(Number);
+        let nextMonthNum = currMonth + 1;
+        let nextYearNum = currYear;
+        if (nextMonthNum > 12) {
+            nextMonthNum = 1;
+            nextYearNum++;
+        }
+        selectNewMonthMonth.value = String(nextMonthNum).padStart(2, '0');
+        selectNewMonthYear.value = nextYearNum;
+    };
+
+    // NOVO: Listener para o formulário de seleção de mês/ano
+    addMonthSelectionForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selectedYear = selectNewMonthYear.value;
+        const selectedMonth = selectNewMonthMonth.value;
+        const newMonthKey = `${selectedYear}-${selectedMonth}`;
+
+        if (allMonthsData[newMonthKey]) {
+            alert('Ops! Esse mês já existe.');
+            return; // Impede a criação se o mês já existe
+        }
+
+        const confirmCopy = confirm("Deseja copiar dados (exceto parcelas, que migram automaticamente) do mês atual para o novo mês?");
+        const currentMonthData = getCurrentMonthData();
+
+        allMonthsData[newMonthKey] = {
+            fixedExpenses: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.fixedExpenses.map(exp => ({ ...exp })))) : [],
+            monthlyExpenses: confirmCopy && currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.monthlyExpenses.map(exp => ({ ...exp })))) : [],
+            income: [{ id: 'salary', name: 'Salário Mensal', value: (currentMonthData && currentMonthData.income.find(i => i.id === 'salary')?.value) || 0 }], // Garante o salário inicial copiado
+            installments: [], // Parcelas não são copiadas diretamente aqui, elas migram
+            categories: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.categories)) : [],
+            paymentMethods: currentMonthData ? JSON.parse(JSON.stringify(currentMonthData.paymentMethods)) : []
+        };
+
+        currentMonthKey = newMonthKey; // Define o novo mês como o atual
+        saveData();
+        updateMonthSelect();
+        renderCurrentMonthData();
+        closeModal(addMonthSelectionModal); // Fecha o modal de seleção
+        alert(`Mês ${new Date(selectedYear, parseInt(selectedMonth) - 1).toLocaleString('pt-BR', { month: 'long' })} / ${selectedYear} adicionado com sucesso!`);
     });
 
     // --- Funções de Modais ---
@@ -413,9 +430,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (modalId === 'incomeInputModal') { // Se o modal é de entrada de salário e não estamos editando (sempre será um novo valor para este mês)
             const salaryItem = currentMonthData.income.find(i => i.id === 'salary');
             monthlySalaryValueInput.value = salaryItem ? salaryItem.value : 0;
+        } else if (modalId === 'addMonthSelectionModal') { // NOVO: Para o modal de seleção de mês/ano
+            populateAddMonthSelects(); // Popula os seletores de ano e mês
         }
 
-        populateSelects(); // Popula os selects do modal (categorias e formas de pagamento)
+        populateSelects(); // Popula os selects dos modais (categorias e formas de pagamento)
 
         // IMPORTANTE: Dispara o evento change no categoryTypeSelect para que a visibilidade da expectativa seja atualizada
         // Isso garante que a div de expectativa apareça/desapareça corretamente ao abrir o modal
@@ -454,6 +473,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modalId === 'incomeInputModal') { // NOVO: Reset para o modal de salário
                 monthlySalaryValueInput.value = 0;
             }
+            if (modalId === 'addMonthSelectionModal') { // NOVO: Reset para o modal de seleção de mês/ano
+                // Não precisa de reset específico aqui, populateAddMonthSelects cuidará
+            }
         }
     };
 
@@ -472,20 +494,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Listener para os botões da grade de Ações Rápidas (Gerenciar Categorias, Gerenciar Formas de Pagamento, Exportar, Importar, Limpar)
-    // Usamos querySelectorAll para pegar todos os botões com a classe 'action-grid-button'
     actionGridButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             const modalId = e.target.closest('.action-grid-button').dataset.modal; // Pega o data-modal do botão clicado
-            // Trata casos especiais que não usam data-modal para abrir modais
-            if (e.target.closest('#exportData')) {
-                // Lógica de exportação (já existe um listener para exportDataBtn)
-                // Não precisa chamar openModal, o listener original de exportDataBtn já cuida disso
-                document.getElementById('exportData').click(); // Dispara o clique no botão original
-            } else if (e.target.closest('#importDataButton')) {
-                document.getElementById('importDataButton').click(); // Dispara o clique no botão original
-            } else if (e.target.closest('#clearTransactionalDataButton')) {
-                document.getElementById('clearTransactionalDataButton').click(); // Dispara o clique no botão original
-            } else if (modalId) {
+            const buttonId = e.target.closest('.action-grid-button').id; // Pega o ID do botão clicado
+
+            // Trata casos especiais que não abrem modais via data-modal diretamente
+            if (buttonId === 'exportData') {
+                document.getElementById('exportData').click();
+            } else if (buttonId === 'importDataButton') {
+                document.getElementById('importDataInput').click(); // Clica no input de arquivo oculto
+            } else if (buttonId === 'clearTransactionalDataButton') {
+                document.getElementById('clearTransactionalDataButton').click();
+            } else if (buttonId === 'openIncomeModalButton') { // Para o botão Inserir Salário, que agora faz parte da grade
+                openModal('incomeInputModal', null, 'incomeInput');
+            }
+            else if (modalId) {
                 // Para botões que abrem modais (Gerenciar Categorias, Gerenciar Formas de Pagamento)
                 openModal(modalId);
             }
