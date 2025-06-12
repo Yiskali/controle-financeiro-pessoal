@@ -267,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ATUALIZADO: addMonthBtn agora abre o modal de seleção de mês/ano
     addMonthBtn.addEventListener('click', () => {
-        // Popula os seletores de ano e mês antes de abrir o modal
         populateAddMonthSelects();
         openModal('addMonthSelectionModal');
     });
@@ -277,8 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentYear = new Date().getFullYear();
         selectNewMonthYear.innerHTML = ''; // Limpa opções antigas
 
-        // Popula anos: do ano atual - 5 até o ano atual + 5
-        for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+        // Popula anos: do ano atual - 5 até 2050
+        for (let year = currentYear - 5; year <= 2050; year++) { // ALTERADO: Ano vai até 2050
             const option = document.createElement('option');
             option.value = year;
             option.textContent = year;
