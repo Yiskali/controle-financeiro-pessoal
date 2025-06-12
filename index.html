@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ADICIONE ESTA LINHA PARA FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <header class="header">
@@ -25,7 +27,6 @@
         <button class="tab-button" data-tab="monthly-expenses">Gastos do Mês</button>
         <button class="tab-button" data-tab="installments">Compras Parceladas</button>
         <button class="tab-button" data-tab="chart">Gráfico</button>
-        <!-- NOVA ABA DE AÇÕES RÁPIDAS -->
         <button class="tab-button" data-tab="quick-actions">Ações Rápidas</button>
     </nav>
 
@@ -46,16 +47,14 @@
                 </div>
             </div>
             <div class="secondary-summary-cards">
-                <!-- CARDS DE SALDO REGULAR -->
                 <div class="card">
                     <h3>Total Gasto Regular</h3>
                     <p id="totalSpentRegularSummary">R$ 0,00</p>
                 </div>
-                <div class="card" style="background-color: var(--terracotta);">
+                <div class="card" style="background-color: var(--terracota);">
                     <h3>Saldo Regular</h3>
                     <p id="currentRegularBalanceSummary" class="balance-positive">R$ 0,00</p>
                 </div>
-                <!-- CARDS DE SALDO VALES -->
                 <div class="card">
                     <h3>Total Gasto Vales</h3>
                     <p id="totalSpentVouchersSummary">R$ 0,00</p>
@@ -171,17 +170,35 @@
             </div>
         </section>
 
-        <!-- NOVA SEÇÃO DE AÇÕES RÁPIDAS (AGORA UMA ABA) -->
+        <!-- SEÇÃO DE AÇÕES RÁPIDAS (AGORA UMA ABA COMPLETA) -->
         <section id="quick-actions" class="tab-content">
             <h2>Ações Rápidas</h2>
-            <div class="action-buttons">
-                <button class="add-button" data-modal="categoryModal">Gerenciar Categorias</button>
-                <button class="add-button" data-modal="paymentMethodModal">Gerenciar Formas de Pagamento</button>
-                <button id="openIncomeModalButton">Inserir Salário</button> <!-- Botão Salário que abre modal -->
-                <button id="exportData">Exportar Dados</button>
+            <div class="action-buttons-grid"> <!-- NOVA CLASSE PARA O GRID -->
+                <button class="action-grid-button" data-modal="categoryModal">
+                    <i class="fas fa-folder"></i>
+                    <span>Gerenciar Categorias</span>
+                </button>
+                <button class="action-grid-button" data-modal="paymentMethodModal">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Gerenciar Formas de Pagamento</span>
+                </button>
+                <button class="action-grid-button" id="openIncomeModalButton">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Inserir Salário</span>
+                </button>
+                <button class="action-grid-button" id="exportData">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Exportar Dados</span>
+                </button>
                 <input type="file" id="importDataInput" accept=".json" style="display: none;">
-                <button id="importDataButton">Importar Dados</button>
-                <button id="clearTransactionalDataButton">Limpar Dados Transacionais</button>
+                <button class="action-grid-button" id="importDataButton">
+                    <i class="fas fa-file-download"></i>
+                    <span>Importar Dados</span>
+                </button>
+                <button class="action-grid-button" id="clearTransactionalDataButton">
+                    <i class="fas fa-broom"></i>
+                    <span>Limpar Dados Transacionais</span>
+                </button>
             </div>
         </section>
 
