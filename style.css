@@ -14,9 +14,9 @@
     --light-gray: #BC4610; /* terracota */
     --dark-text: #fff2bf; /* laranja clarissimo */
     --light-text: #fff;
-    --table-header-bg: #CA8955; /* Usando a cor do header para cabeçalhos de tabela */   /* bege claro */
-    --table-row-even: #f9f9f9;
-    --table-row-odd: #ffffff;
+    --table-header-bg: #491000; /* Usando a cor do header para cabeçalhos de tabela */   /* marrom escuro */
+    --table-row-even: #D4A076; /* bege mais claro */
+    --table-row-odd: #CA8955; /* bege claro */
     --button-bg: #A9A515;  /* verde oliva */  /* botões iniciais */
     --button-hover-bg: #8c4728;
     --modal-bg: rgba(0, 0, 0, 0.5);
