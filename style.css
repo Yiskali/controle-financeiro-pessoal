@@ -94,7 +94,7 @@ body {
     flex-wrap: wrap;
     background-color: var(--light-gray);
     padding: 10px 0;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #491000;
 }
 
 .tab-button {
@@ -189,7 +189,7 @@ table th,
 table td {
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #491000;
 }
 
 table th {
@@ -307,7 +307,7 @@ table td button:hover {
     width: calc(100% - 20px);
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #ccc;
+    border: 1px solid #491000;
     border-radius: 5px;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
