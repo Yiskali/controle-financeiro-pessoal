@@ -279,24 +279,20 @@ document.addEventListener('DOMContentLoaded', () => {
         selectNewMonthYear.innerHTML = ''; // Limpa opções antigas
 
         // Popula anos: do ano atual - 5 até 2050
-        for (let year = currentYear - 5; year <= 2050; year++) { // ALTERADO: Ano vai até 2050
+        for (let year = currentYear - 5; year <= 2050; year++) {
             const option = document.createElement('option');
             option.value = year;
             option.textContent = year;
             selectNewMonthYear.appendChild(option);
         }
-        selectNewMonthYear.value = currentYear; // Seleciona o ano atual por padrão
+        // Seleciona o ano atual por padrão, a menos que o mês/ano atual do navegador seja mais avançado.
+        selectNewMonthYear.value = new Date().getFullYear();
 
-        // Seleciona o próximo mês após o mês atual (ou o primeiro se estiver no último)
-        const [currYear, currMonth] = currentMonthKey.split('-').map(Number);
-        let nextMonthNum = currMonth + 1;
-        let nextYearNum = currYear;
-        if (nextMonthNum > 12) {
-            nextMonthNum = 1;
-            nextYearNum++;
-        }
-        selectNewMonthMonth.value = String(nextMonthNum).padStart(2, '0');
-        selectNewMonthYear.value = nextYearNum;
+        // Seleciona o próximo mês após o mês atual no navegador (para o caso de adicionar mês futuro)
+        const today = new Date();
+        const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        selectNewMonthMonth.value = String(nextMonthDate.getMonth() + 1).padStart(2, '0');
+        selectNewMonthYear.value = nextMonthDate.getFullYear();
     };
 
     // NOVO: Listener para o formulário de seleção de mês/ano
@@ -366,15 +362,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'installments':
                     item = currentMonthData.installments.find(inst => inst.id === itemId);
-                    if (item) {
+                    if (item) { // EDITANDO parcela existente
                         document.getElementById('installmentId').value = item.id;
                         document.getElementById('installmentName').value = item.name;
-                        document.getElementById('installmentDate').value = item.originalDate;
+                        document.getElementById('installmentDate').value = item.originalDate; // Data ORIGINAL da compra
                         document.getElementById('installmentTotal').value = item.totalInstallments;
                         document.getElementById('installmentPaymentMethod').value = item.paymentMethodId;
                         document.getElementById('installmentCategory').value = item.categoryId;
-                        document.getElementById('installmentValue').value = item.valuePerInstallment;
+                        document.getElementById('installmentValue').value = item.valuePerInstallment; // Valor por parcela
                     }
+                    // else, se é um NOVO item, o resetForm já limpa.
                     break;
                 case 'category':
                     item = currentMonthData.categories.find(cat => cat.id === itemId);
@@ -431,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (modalId === 'incomeInputModal') { // Se o modal é de entrada de salário e não estamos editando (sempre será um novo valor para este mês)
             const salaryItem = currentMonthData.income.find(i => i.id === 'salary');
             monthlySalaryValueInput.value = salaryItem ? salaryItem.value : 0;
-        } else if (modalId === 'addMonthSelectionModal') { // NOVO: Para o modal de seleção de mês/ano
+        } else if (modalId === 'addMonthSelectionModal') { // Para o modal de seleção de mês/ano
             populateAddMonthSelects(); // Popula os seletores de ano e mês
         }
 
@@ -1040,13 +1037,25 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('installmentId').value;
         const name = document.getElementById('installmentName').value;
-        const originalDate = document.getElementById('installmentDate').value; // Data da primeira parcela
+        const originalDateInput = document.getElementById('installmentDate').value; // Data que o usuário digitou (ex: '2024-06-15')
         const totalInstallments = parseInt(document.getElementById('installmentTotal').value);
         const paymentMethodId = document.getElementById('installmentPaymentMethod').value;
         const categoryId = document.getElementById('installmentCategory').value;
         const valuePerInstallment = parseFloat(document.getElementById('installmentValue').value);
 
         const currentMonthData = getCurrentMonthData();
+        const [currentYearStr, currentMonthStr] = currentMonthKey.split('-'); // Pega o ano e mês do mês ATUALMENTE SELECIONADO
+
+        // Extrai o dia da data digitada pelo usuário
+        const originalDay = new Date(originalDateInput).getDate();
+        
+        // Constrói a originalDate e currentDate forçando o mês/ano do mês SELECIONADO NO MENU
+        const newOriginalDate = new Date(parseInt(currentYearStr), parseInt(currentMonthStr) - 1, originalDay);
+        // Ajusta o dia se o dia original for maior que o número de dias no mês atual (ex: 31 de jan para fev)
+        if (newOriginalDate.getMonth() !== (parseInt(currentMonthStr) - 1)) {
+            newOriginalDate.setDate(0); // Último dia do mês anterior, que é o último dia do mês desejado
+        }
+        const formattedNewOriginalDate = newOriginalDate.toISOString().split('T')[0];
 
         if (id) {
             const index = currentMonthData.installments.findIndex(inst => inst.id === id);
@@ -1054,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentMonthData.installments[index] = {
                     ...currentMonthData.installments[index],
                     name,
+                    // originalDate e totalInstallments não são alterados em edição para não refazer a série mestre
                     paymentMethodId,
                     categoryId,
                     valuePerInstallment
@@ -1063,8 +1073,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const newInstallment = {
                 id: generateId(),
                 name,
-                originalDate,
-                currentDate: originalDate,
+                originalDate: formattedNewOriginalDate, // IMPORTANTE: Usa o mês/ano do menu + dia da compra
+                currentDate: formattedNewOriginalDate, // Primeira parcela para o mês atual
                 currentInstallment: 1,
                 totalInstallments: totalInstallments,
                 paymentMethodId,
@@ -1076,7 +1086,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         saveData();
         renderCurrentMonthData();
-        closeModal(document.getElementById('installmentModal'));
+        // NÃO FECHA O MODAL, apenas o reseta
+        resetForm('installmentModal'); // Reseta o formulário para nova entrada
     });
 
     categoryForm.addEventListener('submit', (e) => {
