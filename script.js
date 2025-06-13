@@ -289,10 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
         selectNewMonthYear.value = new Date().getFullYear();
 
         // Seleciona o próximo mês após o mês atual no navegador (para o caso de adicionar mês futuro)
-        const today = new Date();
-        const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        selectNewMonthMonth.value = String(nextMonthDate.getMonth() + 1).padStart(2, '0');
-        selectNewMonthYear.value = nextMonthDate.getFullYear();
+        const [currYear, currMonth] = currentMonthKey.split('-').map(Number);
+        let nextMonthNum = currMonth + 1;
+        let nextYearNum = currYear;
+        if (nextMonthNum > 12) {
+            nextMonthNum = 1;
+            nextYearNum++;
+        }
+        selectNewMonthMonth.value = String(nextMonthNum).padStart(2, '0');
+        selectNewMonthYear.value = nextYearNum;
     };
 
     // NOVO: Listener para o formulário de seleção de mês/ano
@@ -332,7 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const openModal = (modalId, itemId = null, itemType = null) => {
         const modal = document.getElementById(modalId);
         modal.style.display = 'flex';
-        resetForm(modalId); // Reseta o formulário antes de preencher para edição
+        resetForm(modalId); // Reseta o formulário e suas listas internas
+
+        // Popula os selects para garantir que as opções estejam disponíveis antes de tentar definir o valor.
+        // Isso é chamado após o resetForm, mas é bom ter aqui para garantir que as opções estejam prontas.
+        populateSelects(); 
 
         if (itemId && itemType) {
             const currentMonthData = getCurrentMonthData();
@@ -432,8 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             populateAddMonthSelects(); // Popula os seletores de ano e mês
         }
 
-        populateSelects(); // Popula os selects dos modais (categorias e formas de pagamento)
-
+        // REMOVIDO: populateSelects() daqui, pois já está no início
         // IMPORTANTE: Dispara o evento change no categoryTypeSelect para que a visibilidade da expectativa seja atualizada
         // Isso garante que a div de expectativa apareça/desapareça corretamente ao abrir o modal
         const event = new Event('change');
@@ -1049,45 +1057,49 @@ document.addEventListener('DOMContentLoaded', () => {
         // Extrai o dia da data digitada pelo usuário
         const originalDay = new Date(originalDateInput).getDate();
         
-        // Constrói a originalDate e currentDate forçando o mês/ano do mês SELECIONADO NO MENU
-        const newOriginalDate = new Date(parseInt(currentYearStr), parseInt(currentMonthStr) - 1, originalDay);
+        // Constrói a originalDate COMPLETA com o ANO E MÊS DO MÊS SELECIONADO e o DIA DA COMPRA
+        // Isso garante que a série da parcela comece no mês atual, no dia da compra
+        const actualOriginalDateForSeries = new Date(parseInt(currentYearStr), parseInt(currentMonthStr) - 1, originalDay);
         // Ajusta o dia se o dia original for maior que o número de dias no mês atual (ex: 31 de jan para fev)
-        if (newOriginalDate.getMonth() !== (parseInt(currentMonthStr) - 1)) {
-            newOriginalDate.setDate(0); // Último dia do mês anterior, que é o último dia do mês desejado
+        if (actualOriginalDateForSeries.getMonth() !== (parseInt(currentMonthStr) - 1)) {
+            actualOriginalDateForSeries.setDate(0); // Último dia do mês anterior, que é o último dia do mês desejado
         }
-        const formattedNewOriginalDate = newOriginalDate.toISOString().split('T')[0];
+        const formattedActualOriginalDateForSeries = actualOriginalDateForSeries.toISOString().split('T')[0];
 
         if (id) {
+            // Edição: A data original (originalDate) e totalInstallments NUNCA MUDAM para uma série existente.
+            // A lógica de migração vai recalcular as parcelas com base na originalDate inicial.
             const index = currentMonthData.installments.findIndex(inst => inst.id === id);
             if (index !== -1) {
                 currentMonthData.installments[index] = {
                     ...currentMonthData.installments[index],
                     name,
-                    // originalDate e totalInstallments não são alterados em edição para não refazer a série mestre
                     paymentMethodId,
                     categoryId,
                     valuePerInstallment
+                    // Não altera originalDate nem totalInstallments aqui para não quebrar a série
                 };
             }
         } else {
+            // Adicionando uma NOVA compra parcelada
             const newInstallment = {
                 id: generateId(),
                 name,
-                originalDate: formattedNewOriginalDate, // IMPORTANTE: Usa o mês/ano do menu + dia da compra
-                currentDate: formattedNewOriginalDate, // Primeira parcela para o mês atual
-                currentInstallment: 1,
+                originalDate: formattedActualOriginalDateForSeries, // A data de início da série (mês atual + dia da compra)
+                currentDate: formattedActualOriginalDateForSeries, // A primeira parcela deste mês
+                currentInstallment: 1, // Sempre a primeira parcela da série ao adicionar
                 totalInstallments: totalInstallments,
-                paymentMethodId,
-                categoryId,
-                valuePerInstallment,
+                paymentMethodId: paymentMethodId,
+                categoryId: categoryId,
+                valuePerInstallment: valuePerInstallment,
                 status: 'Ativa'
             };
             currentMonthData.installments.push(newInstallment);
         }
         saveData();
         renderCurrentMonthData();
-        // NÃO FECHA O MODAL, apenas o reseta
-        resetForm('installmentModal'); // Reseta o formulário para nova entrada
+        // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
+        resetForm('installmentModal');
     });
 
     categoryForm.addEventListener('submit', (e) => {
