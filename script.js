@@ -340,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
         resetForm(modalId); // Reseta o formulário e suas listas internas
 
         // Popula os selects para garantir que as opções estejam disponíveis antes de tentar definir o valor.
-        // Isso é chamado após o resetForm, mas é bom ter aqui para garantir que as opções estejam prontas.
         populateSelects(); 
 
         if (itemId && itemType) {
@@ -356,6 +355,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('fixedExpensePaymentMethod').value = item.paymentMethodId;
                         document.getElementById('fixedExpenseCategory').value = item.categoryId;
                         document.getElementById('fixedExpenseValue').value = item.value;
+
+                        // Selecionar valores corretos nos dropdowns
+                        fixedExpensePaymentMethodSelect.value = item.paymentMethodId;
+                        fixedExpenseCategorySelect.value = item.categoryId;
                     }
                     break;
                 case 'monthlyExpenses':
@@ -367,6 +370,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('monthlyExpensePaymentMethod').value = item.paymentMethodId;
                         document.getElementById('monthlyExpenseCategory').value = item.categoryId;
                         document.getElementById('monthlyExpenseValue').value = item.value;
+
+                        // Selecionar valores corretos nos dropdowns
+                        monthlyExpensePaymentMethodSelect.value = item.paymentMethodId;
+                        monthlyExpenseCategorySelect.value = item.categoryId;
                     }
                     break;
                 case 'installments':
@@ -374,13 +381,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) { // EDITANDO parcela existente
                         document.getElementById('installmentId').value = item.id;
                         document.getElementById('installmentName').value = item.name;
-                        document.getElementById('installmentDate').value = item.originalDate; // Data ORIGINAL da compra
+                        document.getElementById('installmentDate').value = item.originalDate; // Data ORIGINAL da compra (estática)
                         document.getElementById('installmentTotal').value = item.totalInstallments;
                         document.getElementById('installmentPaymentMethod').value = item.paymentMethodId;
                         document.getElementById('installmentCategory').value = item.categoryId;
                         document.getElementById('installmentValue').value = item.valuePerInstallment; // Valor por parcela
+
+                        // Selecionar valores corretos nos dropdowns
+                        installmentPaymentMethodSelect.value = item.paymentMethodId;
+                        installmentCategorySelect.value = item.categoryId;
                     }
-                    // else, se é um NOVO item, o resetForm já limpa.
                     break;
                 case 'category':
                     item = currentMonthData.categories.find(cat => cat.id === itemId);
@@ -441,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
             populateAddMonthSelects(); // Popula os seletores de ano e mês
         }
 
-        // REMOVIDO: populateSelects() daqui, pois já está no início
         // IMPORTANTE: Dispara o evento change no categoryTypeSelect para que a visibilidade da expectativa seja atualizada
         // Isso garante que a div de expectativa apareça/desapareça corretamente ao abrir o modal
         const event = new Event('change');
@@ -1045,39 +1054,41 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('installmentId').value;
         const name = document.getElementById('installmentName').value;
-        const originalDateInput = document.getElementById('installmentDate').value; // Data que o usuário digitou (ex: '2024-06-15')
+        const purchaseDateFromInput = document.getElementById('installmentDate').value; // A data que o usuário digitou (ex: '2024-06-15')
         const totalInstallments = parseInt(document.getElementById('installmentTotal').value);
         const paymentMethodId = document.getElementById('installmentPaymentMethod').value;
         const categoryId = document.getElementById('installmentCategory').value;
         const valuePerInstallment = parseFloat(document.getElementById('installmentValue').value);
 
         const currentMonthData = getCurrentMonthData();
-        const [currentYearStr, currentMonthStr] = currentMonthKey.split('-'); // Pega o ano e mês do mês ATUALMENTE SELECIONADO
+        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
 
-        // Extrai o dia da data digitada pelo usuário
-        const originalDay = new Date(originalDateInput).getDate();
+        // Extrai APENAS O DIA da data de compra digitada pelo usuário
+        const purchaseDay = new Date(purchaseDateFromInput).getDate();
         
-        // Constrói a originalDate COMPLETA com o ANO E MÊS DO MÊS SELECIONADO e o DIA DA COMPRA
-        // Isso garante que a série da parcela comece no mês atual, no dia da compra
-        const actualOriginalDateForSeries = new Date(parseInt(currentYearStr), parseInt(currentMonthStr) - 1, originalDay);
-        // Ajusta o dia se o dia original for maior que o número de dias no mês atual (ex: 31 de jan para fev)
-        if (actualOriginalDateForSeries.getMonth() !== (parseInt(currentMonthStr) - 1)) {
-            actualOriginalDateForSeries.setDate(0); // Último dia do mês anterior, que é o último dia do mês desejado
+        // Constrói a seriesStartDate (que será a "originalDate" para a série de parcelas)
+        // usando o ANO e MÊS DO MÊS ATUALMENTE SELECIONADO no menu, e o DIA DA COMPRA.
+        const seriesStartDate = new Date(currentYearSelected, currentMonthSelected - 1, purchaseDay);
+        
+        // Ajusta o dia se o purchaseDay for maior que o número de dias no mês (ex: 31 de Jan para Fev)
+        if (seriesStartDate.getMonth() !== (currentMonthSelected - 1)) {
+            seriesStartDate.setDate(0); // Ajusta para o último dia do mês, se o dia original exceder
         }
-        const formattedActualOriginalDateForSeries = actualOriginalDateForSeries.toISOString().split('T')[0];
+        const formattedSeriesStartDate = seriesStartDate.toISOString().split('T')[0];
 
         if (id) {
-            // Edição: A data original (originalDate) e totalInstallments NUNCA MUDAM para uma série existente.
-            // A lógica de migração vai recalcular as parcelas com base na originalDate inicial.
+            // Edição de parcela existente:
+            // originalDate (agora purchaseDate) e totalInstallments NÃO MUDAM para uma série existente.
+            // A lógica de migração vai recalcular as parcelas com base na seriesStartDate original da série.
             const index = currentMonthData.installments.findIndex(inst => inst.id === id);
             if (index !== -1) {
                 currentMonthData.installments[index] = {
                     ...currentMonthData.installments[index],
                     name,
+                    // Não altera purchaseDate nem seriesStartDate nem totalInstallments em edição
                     paymentMethodId,
                     categoryId,
                     valuePerInstallment
-                    // Não altera originalDate nem totalInstallments aqui para não quebrar a série
                 };
             }
         } else {
@@ -1085,8 +1096,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const newInstallment = {
                 id: generateId(),
                 name,
-                originalDate: formattedActualOriginalDateForSeries, // A data de início da série (mês atual + dia da compra)
-                currentDate: formattedActualOriginalDateForSeries, // A primeira parcela deste mês
+                purchaseDate: purchaseDateFromInput, // SALVA A DATA DIGITADA PELO USUÁRIO (ex: 2024-06-15) - para registro
+                originalDate: formattedSeriesStartDate, // seriesStartDate: Data de início da série (mês atual no menu + dia da compra)
+                currentDate: formattedSeriesStartDate, // A primeira parcela deste mês
                 currentInstallment: 1, // Sempre a primeira parcela da série ao adicionar
                 totalInstallments: totalInstallments,
                 paymentMethodId: paymentMethodId,
@@ -1333,14 +1345,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const masterInstallmentDefinitions = new Map();
 
         // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
+        // Agora o 'originalDate' na definição mestra será o 'seriesStartDate'
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
+                // Usamos inst.originalDate como a base para 'seriesStartDate' aqui
                 if (!existingMaster || new Date(inst.originalDate) < new Date(existingMaster.originalDate)) {
                     masterInstallmentDefinitions.set(inst.id, {
                         id: inst.id,
                         name: inst.name,
-                        originalDate: inst.originalDate, // A data mais antiga para esta série
+                        purchaseDate: inst.purchaseDate, // Preserva a data de compra original
+                        originalDate: inst.originalDate, // Este AGORA é o seriesStartDate para a migração
                         totalInstallments: inst.totalInstallments,
                         paymentMethodId: inst.paymentMethodId,
                         categoryId: inst.categoryId,
@@ -1364,13 +1379,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         masterInstallmentDefinitions.forEach(masterInst => {
-            const originalDate = new Date(masterInst.originalDate);
+            const seriesStartDateObj = new Date(masterInst.originalDate); // Usa o originalDate (que é o seriesStartDate)
 
             sortedMonthsKeys.forEach(monthKey => {
                 const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1);
 
-                const diffMonths = (monthDate.getFullYear() - originalDate.getFullYear()) * 12 +
-                                   (monthDate.getMonth() - originalDate.getMonth());
+                const diffMonths = (monthDate.getFullYear() - seriesStartDateObj.getFullYear()) * 12 +
+                                   (monthDate.getMonth() - seriesStartDateObj.getMonth());
 
                 if (diffMonths < 0) {
                      return;
@@ -1382,7 +1397,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                let newDay = originalDate.getDate();
+                let newDay = seriesStartDateObj.getDate(); // Pega o dia da seriesStartDate
                 const daysInCurrentMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
                 if (newDay > daysInCurrentMonth) {
                     newDay = daysInCurrentMonth;
@@ -1393,7 +1408,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newInstallmentEntry = {
                     id: masterInst.id,
                     name: masterInst.name,
-                    originalDate: masterInst.originalDate,
+                    purchaseDate: masterInst.purchaseDate, // Preserva a purchaseDate
+                    originalDate: masterInst.originalDate, // Mantém como seriesStartDate
                     currentDate: newDateFormatted,
                     currentInstallment: currentInstallmentNumber,
                     totalInstallments: masterInst.totalInstallments,
