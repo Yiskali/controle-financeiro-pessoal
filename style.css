@@ -289,14 +289,14 @@ table td button:hover {
 
 .modal-content h2 {
     margin-bottom: 20px;
-    color: var(--terracota);
+    color: var(--text-color-title);
 }
 
 .modal-content form label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
-    color: var(--dark-text);
+    color: var(--olive-green);
 }
 
 .modal-content form input[type="text"],
