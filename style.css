@@ -314,7 +314,7 @@ table td button:hover {
 }
 
 .modal-content form button[type="submit"] {
-    background-color: var(--olive-green);
+    background-color: var(--text-color-title);
     color: var(--light-text);
     border: none;
     padding: 12px 25px;
