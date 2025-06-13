@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) { // EDITANDO parcela existente
                         document.getElementById('installmentId').value = item.id;
                         document.getElementById('installmentName').value = item.name;
-                        document.getElementById('installmentDate').value = item.originalDate; // Data ORIGINAL da compra (estática)
+                        document.getElementById('installmentDate').value = item.purchaseDate; // IMPORTANTE: Preencher com purchaseDate (data da compra)
                         document.getElementById('installmentTotal').value = item.totalInstallments;
                         document.getElementById('installmentPaymentMethod').value = item.paymentMethodId;
                         document.getElementById('installmentCategory').value = item.categoryId;
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.currentDate}</td>
+                        <td>${item.purchaseDate}</td> <!-- IMPORTANTE: Exibir a purchaseDate aqui -->
                         <td>${item.currentInstallment}/${item.totalInstallments}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
@@ -1054,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('installmentId').value;
         const name = document.getElementById('installmentName').value;
-        const purchaseDateFromInput = document.getElementById('installmentDate').value; // A data que o usuário digitou (ex: '2024-06-15')
+        const purchaseDateFromInput = document.getElementById('installmentDate').value; // Data que o usuário digitou (ex: '2024-06-15')
         const totalInstallments = parseInt(document.getElementById('installmentTotal').value);
         const paymentMethodId = document.getElementById('installmentPaymentMethod').value;
         const categoryId = document.getElementById('installmentCategory').value;
@@ -1077,18 +1077,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const formattedSeriesStartDate = seriesStartDate.toISOString().split('T')[0];
 
         if (id) {
-            // Edição de parcela existente:
-            // originalDate (agora purchaseDate) e totalInstallments NÃO MUDAM para uma série existente.
-            // A lógica de migração vai recalcular as parcelas com base na seriesStartDate original da série.
+            // Edição: A purchaseDate é estática e originalDate é a seriesStartDate
             const index = currentMonthData.installments.findIndex(inst => inst.id === id);
             if (index !== -1) {
                 currentMonthData.installments[index] = {
                     ...currentMonthData.installments[index],
                     name,
-                    // Não altera purchaseDate nem seriesStartDate nem totalInstallments em edição
+                    purchaseDate: purchaseDateFromInput, // ATUALIZA: A data de compra visualmente também pode ser editada
                     paymentMethodId,
                     categoryId,
                     valuePerInstallment
+                    // Não altera originalDate (seriesStartDate) nem totalInstallments aqui para não quebrar a série
                 };
             }
         } else {
@@ -1096,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newInstallment = {
                 id: generateId(),
                 name,
-                purchaseDate: purchaseDateFromInput, // SALVA A DATA DIGITADA PELO USUÁRIO (ex: 2024-06-15) - para registro
+                purchaseDate: purchaseDateFromInput, // SALVA A DATA DIGITADA PELO USUÁRIO (ex: 2025-01-12) - para registro
                 originalDate: formattedSeriesStartDate, // seriesStartDate: Data de início da série (mês atual no menu + dia da compra)
                 currentDate: formattedSeriesStartDate, // A primeira parcela deste mês
                 currentInstallment: 1, // Sempre a primeira parcela da série ao adicionar
