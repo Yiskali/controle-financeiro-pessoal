@@ -17,8 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalIncomeSummary = document.getElementById('totalIncomeSummary');
     const totalExpensesSummary = document.getElementById('totalExpensesSummary');
     const currentBalanceSummary = document.getElementById('currentBalanceSummary');
+    // Renomeados
     const totalSpentRegularSummary = document.getElementById('totalSpentRegularSummary');
     const totalSpentVouchersSummary = document.getElementById('totalSpentVouchersSummary');
+    // Novos Cards de Saldo
     const currentRegularBalanceSummary = document.getElementById('currentRegularBalanceSummary');
     const currentVoucherBalanceSummary = document.getElementById('currentVoucherBalanceSummary');
 
