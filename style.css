@@ -296,7 +296,7 @@ table td button:hover {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
-    color: var(--olive-green);
+    color: var(--dark-text);
 }
 
 .modal-content form input[type="text"],
