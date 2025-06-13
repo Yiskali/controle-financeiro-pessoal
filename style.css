@@ -1,7 +1,7 @@
 /* Paleta de Cores */
 :root {
     --background-color: #F6F1E2; /* off-white */
-    --header-bg-color:  ##CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */ 
+    --header-bg-color:  #CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */ 
     --card-income-bg: #A9A515; /* verde oliva */
     --card-expenses-bg: #5F744A; /* verde azeitona */
     --card-balance-bg: #A78C74; /* bege arroxeado */
