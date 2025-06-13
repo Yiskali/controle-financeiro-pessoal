@@ -1,7 +1,7 @@
 /* Paleta de Cores */
 :root {
     --background-color: #F6F1E2; /* off-white */
-    --header-bg-color: #C23E10; /* Fundo do menu principal (do resumo) */ /* terracota */
+    --header-bg-color:  #9b620e; /* bege escuro */ /* Fundo do menu principal (do resumo) */ 
     --card-income-bg: #A9A515; /* verde oliva */
     --card-expenses-bg: #5F744A; /* verde azeitona */
     --card-balance-bg: #A78C74; /* bege arroxeado */
@@ -11,7 +11,7 @@
     --terracota: #460808; /* vinho */
     --olive-green: #808000;
     --beige: #DAD0B5;
-    --light-gray: #9b620e; /* bege escuro */
+    --light-gray: #C23E10; /* terracota */
     --dark-text: #333;
     --light-text: #fff;
     --table-header-bg: #461D17; /* Usando a cor do header para cabeçalhos de tabela */ /* vinho amarronzado */
