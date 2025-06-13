@@ -1,23 +1,23 @@
 /* Paleta de Cores */
 :root {
     --background-color: #F6F1E2; /* off-white */
-    --header-bg-color:  #9b620e; /* bege escuro */ /* Fundo do menu principal (do resumo) */ 
+    --header-bg-color:  ##CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */ 
     --card-income-bg: #A9A515; /* verde oliva */
     --card-expenses-bg: #5F744A; /* verde azeitona */
     --card-balance-bg: #A78C74; /* bege arroxeado */
-    --text-color-title: #C1BBAE; /* Cor da fonte dos títulos do resumo */ /* cinza clarissimo */
+    --text-color-title: #491000; /* Cor da fonte dos títulos do resumo */ /* marrom escuro */
     --balance-positive-color: #0C343D; /* azul naval */
     --balance-negative-color: #461D17; /* vinho amarronzado */
     --terracota: #460808; /* vinho */
     --olive-green: #808000;
     --beige: #DAD0B5;
-    --light-gray: #C23E10; /* terracota */
-    --dark-text: #333;
+    --light-gray: #BC4610; /* terracota */
+    --dark-text: #fff2bf; /* laranja clarissimo */
     --light-text: #fff;
     --table-header-bg: #461D17; /* Usando a cor do header para cabeçalhos de tabela */ /* vinho amarronzado */
     --table-row-even: #f9f9f9;
     --table-row-odd: #ffffff;
-    --button-bg: #A0522D;
+    --button-bg: #A9A515;  /* verde oliva */  /* botões iniciais */
     --button-hover-bg: #8c4728;
     --modal-bg: rgba(0, 0, 0, 0.5);
     --modal-content-bg: #F6F1E2;
