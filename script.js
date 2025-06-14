@@ -114,6 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return (y >= 128) ? 'black' : 'white';
     }
 
+    // NOVA FUNÇÃO: Formata data de YYYY-MM-DD para DD/MM/YYYY
+    const formatDisplayDate = (dateString) => {
+        if (!dateString) return '';
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+    };
+
     // --- Funções de LocalStorage ---
 
     const loadData = () => {
@@ -712,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'fixedExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.date}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -725,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.date}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -735,11 +742,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </td>
                     `;
                     break;
-                // REMOVIDO: Renderização de tabela para entradas
                 case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.purchaseDate}</td> <!-- IMPORTANTE: Exibir a purchaseDate aqui -->
+                        <td>${formatDisplayDate(item.purchaseDate)}</td> <!-- Formata e exibe a purchaseDate aqui -->
                         <td>${item.currentInstallment}/${item.totalInstallments}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
@@ -1061,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const valuePerInstallment = parseFloat(document.getElementById('installmentValue').value);
 
         const currentMonthData = getCurrentMonthData();
-        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
+        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Pega o ano e mês do mês ATUALMENTE SELECIONADO NO MENU
 
         // Extrai APENAS O DIA da data de compra digitada pelo usuário
         const purchaseDay = new Date(purchaseDateFromInput).getDate();
@@ -1077,19 +1083,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const formattedSeriesStartDate = seriesStartDate.toISOString().split('T')[0];
 
         if (id) {
-            // Edição: A purchaseDate é estática e originalDate é a seriesStartDate
-            const index = currentMonthData.installments.findIndex(inst => inst.id === id);
-            if (index !== -1) {
-                currentMonthData.installments[index] = {
-                    ...currentMonthData.installments[index],
-                    name,
-                    purchaseDate: purchaseDateFromInput, // ATUALIZA: A data de compra visualmente também pode ser editada
-                    paymentMethodId,
-                    categoryId,
-                    valuePerInstallment
-                    // Não altera originalDate (seriesStartDate) nem totalInstallments aqui para não quebrar a série
-                };
-            }
+            // Edição de parcela existente:
+            // Percorre *todos* os meses para atualizar a definição mestre da parcela
+            // com os novos valores globais (totalInstallments, name, valuePerInstallment, etc.)
+            Object.keys(allMonthsData).forEach(monthKey => {
+                let monthData = allMonthsData[monthKey];
+                const index = monthData.installments.findIndex(inst => inst.id === id);
+                if (index !== -1) {
+                    monthData.installments[index] = {
+                        ...monthData.installments[index],
+                        name: name,
+                        purchaseDate: purchaseDateFromInput, // Salva a data de compra atualizada
+                        totalInstallments: totalInstallments, // Atualiza o total de parcelas
+                        paymentMethodId: paymentMethodId,
+                        categoryId: categoryId,
+                        valuePerInstallment: valuePerInstallment
+                        // originalDate (seriesStartDate) e currentDate não são alterados em edição
+                        // pois são recalculados pela migrateInstallments
+                    };
+                }
+            });
         } else {
             // Adicionando uma NOVA compra parcelada
             const newInstallment = {
