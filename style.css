@@ -40,7 +40,7 @@
 
 body {
     font-family: 'Rajdhani', sans-serif;
-    background-color: var(--background-color);
+    background-color: var(--header-bg-color);
     color: var(--dark-text); /* Cor do texto principal (cinza claríssimo) */
     line-height: 1.6;
 }
