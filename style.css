@@ -1,35 +1,35 @@
 /* Paleta de Cores */
 :root {
     --background-color: #CA8955; /* bege claro */
-    --header-bg-color:  #CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */ 
+    --header-bg-color: #CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */
     --card-income-bg: #A9A515; /* verde oliva */
     --card-expenses-bg: #5F744A; /* verde azeitona */
     --card-balance-bg: #A78C74; /* bege arroxeado */
-    --text-color-title: #491000; /* Cor da fonte dos títulos do resumo */ /* marrom escuro */
+    --text-color-title: #491000; /* Cor da fonte dos títulos do resumo - marrom escuro */
     --balance-positive-color: #274e13; /* verde escuro */
     --balance-negative-color: #461D17; /* vinho amarronzado */
-    --terracota: #CA8955; /* bege claro */
-    --olive-green: #808000;
-    --beige: #8C4728; /* capuccino */
-    --light-gray: #BC4610; /* terracota */
-    --dark-text: #dad0b5; /* cinza clarissimo */
-    --light-text: #fff;
-    --table-header-bg: #491000; /* Usando a cor do header para cabeçalhos de tabela */   /* marrom escuro */
+    --terracota: #BC4610; /* terracota (cor de destaque principal) */
+    --olive-green: #808000; /* verde oliva (original) */
+    --beige: #8C4728; /* capuccino (para fundos de lista/hover) */
+    --light-gray: #BC4610; /* terracota (para fundo da barra de abas e botões não ativos) */
+    --dark-text: #dad0b5; /* cinza clarissimo (para texto principal) */
+    --light-text: #fff; /* branco */
+    --table-header-bg: #491000; /* marrom escuro (para cabeçalhos de tabela) */
     --table-row-even: #D4A076; /* bege mais claro */
     --table-row-odd: #CA8955; /* bege claro */
-    --button-bg: #A9A515;  /* verde oliva */  /* botões iniciais */
-    --button-hover-bg: #8c4728;
-    --modal-bg: rgba(0, 0, 0, 0.5);
-    --modal-content-bg: #808000;
-    --card-saldo-regular-bg: #0C343D;
+    --button-bg: #A9A515;  /* verde oliva (botões iniciais) */
+    --button-hover-bg: #8c4728; /* capuccino (hover para botões) */
+    --modal-bg: rgba(0, 0, 0, 0.5); /* fundo do modal */
+    --modal-content-bg: #808000; /* fundo do conteúdo do modal */
+    --card-saldo-regular-bg: #0C343D; /* azul marinho escuro (para card Saldo Regular) */
 
     /* Novas cores para botões de Ações Rápidas - tons mais fortes */
-    --action-button-category-bg: #8c4728; /* Terracota mais escuro */
-    --action-button-payment-bg: #5F744A; /* Verde Escuro */
-    --action-button-salary-bg: #A9A515; /* Amarelo da Entrada */
-    --action-button-export-bg: #0C343D; /* Azul marinho */
-    --action-button-import-bg: #A78C74; /* Marrom claro */
-    --action-button-clear-bg: #461D17; /* Vermelho escuro */
+    --action-button-category-bg: #8c4728; /* Capuccino */
+    --action-button-payment-bg: #5F744A; /* Verde Azeitona */
+    --action-button-salary-bg: #A9A515; /* Verde Oliva */
+    --action-button-export-bg: #0C343D; /* Azul Marinho */
+    --action-button-import-bg: #A78C74; /* Bege Arroxeado */
+    --action-button-clear-bg: #461D17; /* Vinho Amarronzado */
 }
 
 * {
@@ -39,7 +39,7 @@
 }
 
 body {
-    font-family: 'Rajdhani', sans-serif; /* GARANTINDO A FONTE AQUI */
+    font-family: 'Rajdhani', sans-serif;
     background-color: var(--background-color);
     color: var(--dark-text);
     line-height: 1.6;
@@ -84,7 +84,7 @@ body {
 }
 
 .month-navigation select {
-    background-color: var(--beige);
+    background-color: var(--beige); /* Usando --beige para o select */
     color: var(--dark-text);
 }
 
@@ -92,30 +92,33 @@ body {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    background-color: var(--light-gray);
+    background-color: var(--light-gray); /* Fundo da barra de abas - terracota */
     padding: 10px 0;
-    border-bottom: 1px solid #491000;
+    border-bottom: 1px solid var(--text-color-title); /* Borda marrom escuro */
 }
 
 .tab-button {
     padding: 10px 20px;
     border: none;
-    background-color: transparent;
-    color: var(--dark-text);
+    background-color: var(--light-gray); /* Cor de fundo para botões de aba não ativos - terracota */
+    color: var(--dark-text); /* Texto mais escuro para abas não ativas */
     cursor: pointer;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
     transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 5px; /* Bordas arredondadas para todos os botões de aba */
+    margin: 0 2px; /* Pequeno espaçamento entre as abas */
 }
 
 .tab-button:hover {
-    background-color: var(--beige);
+    background-color: var(--beige); /* Cor mais clara no hover */
+    color: var(--dark-text);
 }
 
 .tab-button.active {
-    background-color: var(--terracota);
-    color: var(--light-text);
-    border-radius: 5px;
+    background-color: var(--terracota); /* Cor de destaque para aba ativa - terracota */
+    color: var(--light-text); /* Texto claro para aba ativa */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra para aba ativa */
 }
 
 .container {
@@ -126,7 +129,7 @@ body {
 
 .tab-content {
     display: none;
-    background-color: var(--light-gray);
+    background-color: var(--background-color); /* Usando a cor de fundo principal para o conteúdo das abas */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -151,7 +154,7 @@ body {
     min-width: 250px;
     padding: 25px;
     border-radius: 8px;
-    color: var(--light-text);
+    color: var(--light-text); /* Texto branco nos cards coloridos */
     text-align: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -159,7 +162,7 @@ body {
 .card h3 {
     margin-bottom: 10px;
     font-size: 1.3rem;
-    color: var(--text-color-title);
+    color: var(--text-color-title); /* Títulos dos cards com marrom escuro */
 }
 
 .card p {
@@ -180,7 +183,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    background-color: var(--table-row-odd);
+    background-color: var(--table-row-odd); /* Fundo da linha ímpar da tabela - bege claro */
     border-radius: 8px;
     overflow: hidden;
 }
@@ -189,7 +192,7 @@ table th,
 table td {
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid #491000;
+    border-bottom: 1px solid var(--table-header-bg); /* Borda da tabela com marrom escuro */
 }
 
 table th {
@@ -200,11 +203,11 @@ table th {
 }
 
 table tbody tr:nth-child(even) {
-    background-color: var(--table-row-even);
+    background-color: var(--table-row-even); /* Fundo de linha par - bege mais claro */
 }
 
 table tbody tr:hover {
-    background-color: var(--beige);
+    background-color: var(--beige); /* Fundo de linha ao passar o mouse - capuccino */
 }
 
 /* Action Buttons within tables */
@@ -225,7 +228,7 @@ table td button:hover {
     background-color: var(--button-hover-bg);
 }
 
-/* Add Button for Sections (Mantido para "Adicionar Gasto") */
+/* Add Button for Sections (Mantido para "Adicionar Gasto" dentro das abas) */
 .add-button {
     background-color: var(--olive-green);
     color: var(--light-text);
@@ -258,7 +261,7 @@ table td button:hover {
 }
 
 .modal-content {
-    background-color: var(--modal-content-bg);
+    background-color: var(--modal-content-bg); /* Fundo do conteúdo do modal - verde oliva */
     padding: 30px;
     border-radius: 10px;
     width: 90%;
@@ -270,7 +273,7 @@ table td button:hover {
 }
 
 .close-button {
-    color: #aaa;
+    color: var(--dark-text); /* Cor do 'X' do modal marrom escuro */
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -282,21 +285,21 @@ table td button:hover {
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--terracota);
+    color: var(--terracota); /* Cor de destaque ao passar o mouse */
     text-decoration: none;
     cursor: pointer;
 }
 
 .modal-content h2 {
     margin-bottom: 20px;
-    color: var(--text-color-title);
+    color: var(--text-color-title); /* Título do modal marrom escuro */
 }
 
 .modal-content form label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
-    color: var(--dark-text);
+    color: var(--dark-text); /* Labels dos formulários marrom escuro */
 }
 
 .modal-content form input[type="text"],
@@ -307,14 +310,16 @@ table td button:hover {
     width: calc(100% - 20px);
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #491000;
+    border: 1px solid var(--text-color-title); /* Borda dos inputs e selects marrom escuro */
     border-radius: 5px;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
+    color: var(--dark-text); /* Texto digitado nos inputs marrom escuro */
+    background-color: var(--background-color); /* Fundo dos inputs com a cor de fundo principal */
 }
 
 .modal-content form button[type="submit"] {
-    background-color: var(--text-color-title);
+    background-color: var(--table-header-bg); /* Botão salvar do modal com cor de cabeçalho de tabela */
     color: var(--light-text);
     border: none;
     padding: 12px 25px;
@@ -326,8 +331,48 @@ table td button:hover {
 }
 
 .modal-content form button[type="submit"]:hover {
-    background-color: #6a6a00;
+    background-color: var(--action-button-clear-bg); /* Cor de hover para botões de modal - vinho amarronzado */
 }
+
+/* Estilos para o NOVO modal customizado de confirmação */
+#customConfirmModal .modal-content {
+    text-align: center;
+    padding: 40px; /* Mais padding para a mensagem */
+    background-color: var(--modal-content-bg); /* Fundo do modal de confirmação customizado - verde oliva */
+}
+
+#customConfirmModal .confirm-message-text {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: var(--dark-text); /* Texto da mensagem de confirmação customizada - marrom escuro */
+    line-height: 1.5;
+}
+
+.confirm-buttons-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Espaçamento entre os botões de opção */
+    margin-top: 20px;
+}
+
+.modal-confirm-button {
+    background-color: var(--table-header-bg); /* Botões do modal de confirmação customizado - marrom escuro */
+    color: var(--light-text);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    min-width: 150px; /* Garante que os botões tenham um tamanho mínimo */
+}
+
+.modal-confirm-button:hover {
+    background-color: var(--action-button-clear-bg); /* Hover para botões de confirmação - vinho amarronzado */
+}
+
 
 #categoryList,
 #paymentMethodList {
@@ -338,14 +383,14 @@ table td button:hover {
 
 #categoryList li,
 #paymentMethodList li {
-    background-color: var(--beige);
+    background-color: var(--beige); /* Fundo das listas de categoria/pm - capuccino */
     padding: 10px;
     margin-bottom: 8px;
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--dark-text);
+    color: var(--dark-text); /* Texto das listas marrom escuro */
 }
 
 #categoryList li button,
