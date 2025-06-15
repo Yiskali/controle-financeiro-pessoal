@@ -566,10 +566,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
+   // Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
     // O callback para customizada retornará 'local' ou 'global'
     // O callback para Sim/Não retornará true ou false
     const showConfirmModal = (message, callback, option1Text = 'Sim', option2Text = 'Não') => {
+        // Define os handlers AQUI DENTRO, mas antes de serem usados
+        const customConfirmHandler = (e) => {
+            const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global';
+            callback(choice); // Chama o callback com a opção escolhida ('local' ou 'global')
+            customConfirmModal.style.display = 'none'; // Fecha o modal customizado
+        };
+
+        const genericConfirmHandler = (e) => {
+            const choice = e.target.id === 'confirmYes' ? true : false;
+            callback(choice); // Chama o callback com a opção escolhida (true ou false)
+            confirmModal.style.display = 'none'; // Fecha o modal Sim/Não
+        };
+
         // Verifica se é uma confirmação com opções customizadas (usando labels de botões diferentes de Sim/Não)
         if (option1Text !== 'Sim' || option2Text !== 'Não') {
             // Esconde o modal Sim/Não padrão se estiver visível
@@ -578,19 +591,11 @@ document.addEventListener('DOMContentLoaded', () => {
             customConfirmModal.style.display = 'flex';
             customConfirmMessage.textContent = message; // Exibe a mensagem completa
             customConfirmOption1Btn.textContent = option1Text;
-            customConfirmOption2Btn.textContent = option2Text;
+            customConfirmOption2Btn.textContent = option2Btn;
 
             // Limpa todos os listeners anteriores para evitar múltiplos disparos
             customConfirmOption1Btn.removeEventListener('click', customConfirmHandler);
             customConfirmOption2Btn.removeEventListener('click', customConfirmHandler);
-
-            // Adiciona um novo handler para os botões do modal customizado
-            // Define a função handler aqui dentro para que ela tenha acesso ao 'callback' correto
-            const customConfirmHandler = (e) => {
-                const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global';
-                callback(choice); // Chama o callback com a opção escolhida ('local' ou 'global')
-                customConfirmModal.style.display = 'none'; // Fecha o modal customizado
-            };
 
             customConfirmOption1Btn.addEventListener('click', customConfirmHandler);
             customConfirmOption2Btn.addEventListener('click', customConfirmHandler);
@@ -607,12 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmYesBtn.removeEventListener('click', genericConfirmHandler);
             confirmNoBtn.removeEventListener('click', genericConfirmHandler);
 
-            // Adiciona um novo handler para os botões do modal Sim/Não
-            const genericConfirmHandler = (e) => {
-                const choice = e.target.id === 'confirmYes' ? true : false;
-                callback(choice); // Chama o callback com a opção escolhida (true ou false)
-                confirmModal.style.display = 'none'; // Fecha o modal Sim/Não
-            };
             confirmYesBtn.addEventListener('click', genericConfirmHandler);
             confirmNoBtn.addEventListener('click', genericConfirmHandler);
         }
