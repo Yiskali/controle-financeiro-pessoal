@@ -57,6 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectNewMonthYear = document.getElementById('selectNewMonthYear');
     const selectNewMonthMonth = document.getElementById('selectNewMonthMonth');
 
+    // Elementos do NOVO Modal Customizado de Confirmação
+    const customConfirmModal = document.getElementById('customConfirmModal');
+    const customConfirmMessage = document.getElementById('customConfirmMessage');
+    const customConfirmOption1Btn = document.getElementById('customConfirmOption1');
+    const customConfirmOption2Btn = document.getElementById('customConfirmOption2');
+
     // Campos de seleção para categorias e formas de pagamento
     const fixedExpensePaymentMethodSelect = document.getElementById('fixedExpensePaymentMethod');
     const fixedExpenseCategorySelect = document.getElementById('fixedExpenseCategory');
@@ -76,12 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryList = document.getElementById('categoryList');
     const paymentMethodList = document.getElementById('paymentMethodList');
 
-    // Confirm Modal
+    // Confirm Modal (o original, para Sim/Não simples)
     const confirmModal = document.getElementById('confirmModal');
     const confirmMessage = document.getElementById('confirmMessage');
     const confirmYesBtn = document.getElementById('confirmYes');
     const confirmNoBtn = document.getElementById('confirmNo');
-    let confirmCallback = null;
+    let genericConfirmCallback = null; // Renomeado para evitar conflito
 
     // Botão para limpar dados transacionais
     const clearTransactionalDataButton = document.getElementById('clearTransactionalDataButton');
@@ -359,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item) {
                         document.getElementById('fixedExpenseId').value = item.id;
                         document.getElementById('fixedExpenseName').value = item.name;
-                        document.getElementById('fixedExpenseDate').value = item.date;
+                        fixedExpenseDateInput.value = item.date; // Preencher com a data existente
                         document.getElementById('fixedExpensePaymentMethod').value = item.paymentMethodId;
                         document.getElementById('fixedExpenseCategory').value = item.categoryId;
                         document.getElementById('fixedExpenseValue').value = item.value;
@@ -556,25 +562,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Função de confirmação genérica
-    const showConfirmModal = (message, callback) => {
-        confirmMessage.textContent = message;
-        confirmCallback = callback;
-        confirmModal.style.display = 'flex';
+    const showConfirmModal = (message, callback, option1Text = 'Sim', option2Text = 'Não') => {
+        confirmMessage.textContent = message; // Usa o modal original para Sim/Não
+        customConfirmModal.style.display = 'none'; // Garante que o modal customizado esteja escondido
+
+        // Se for a confirmação especial (editar gasto fixo ou parcela)
+        if (message.includes('Alterar dado em :')) {
+            customConfirmModal.style.display = 'flex';
+            customConfirmMessage.textContent = message.split(':')[0] + ':'; // Mostra apenas a mensagem principal
+            customConfirmOption1Btn.textContent = option1Text;
+            customConfirmOption2Btn.textContent = option2Text;
+
+            // Remove listeners antigos para evitar duplicação
+            customConfirmOption1Btn.removeEventListener('click', handleCustomConfirmClick);
+            customConfirmOption2Btn.removeEventListener('click', handleCustomConfirmClick);
+
+            // Adiciona novos listeners
+            const handleCustomConfirmClick = (e) => {
+                const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global';
+                callback(choice);
+                customConfirmModal.style.display = 'none';
+            };
+            customConfirmOption1Btn.addEventListener('click', handleCustomConfirmClick);
+            customConfirmOption2Btn.addEventListener('click', handleCustomConfirmClick);
+
+        } else {
+            // Para confirmações Sim/Não genéricas
+            confirmModal.style.display = 'flex';
+            confirmMessage.textContent = message;
+
+            confirmYesBtn.removeEventListener('click', handleGenericConfirmClick);
+            confirmNoBtn.removeEventListener('click', handleGenericConfirmClick);
+
+            const handleGenericConfirmClick = (e) => {
+                const choice = e.target.id === 'confirmYes' ? true : false;
+                callback(choice);
+                confirmModal.style.display = 'none';
+            };
+            confirmYesBtn.addEventListener('click', handleGenericConfirmClick);
+            confirmNoBtn.addEventListener('click', handleGenericConfirmClick);
+        }
     };
 
-    confirmYesBtn.addEventListener('click', () => {
-        if (confirmCallback) {
-            confirmCallback(true); // Confirma a ação
-        }
-        confirmModal.style.display = 'none';
-    });
-
-    confirmNoBtn.addEventListener('click', () => {
-        if (confirmCallback) {
-            confirmCallback(false); // Nega a ação
-        }
-        confirmModal.style.display = 'none';
-    });
 
     // --- NOVO: Função para limpar dados transacionais seletivamente ---
     clearTransactionalDataButton.addEventListener('click', () => {
@@ -720,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'fixedExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -733,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.date}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -1011,32 +1040,34 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('fixedExpenseId').value;
         const name = document.getElementById('fixedExpenseName').value;
-        const date = document.getElementById('fixedExpenseDate').value;
+        const date = document.getElementById('fixedExpenseDate').value; // Data que o usuário digitou
         const paymentMethodId = document.getElementById('fixedExpensePaymentMethod').value;
         const categoryId = document.getElementById('fixedExpenseCategory').value;
         const value = parseFloat(document.getElementById('fixedExpenseValue').value);
 
         const currentMonthData = getCurrentMonthData();
-        const [currentYearFixed, currentMonthFixed] = currentMonthKey.split('-').map(Number);
-        const fixedDay = new Date(date).getDate(); // Pega o dia da data inserida
+        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number);
+        const dayOfExpense = new Date(date).getDate(); // Pega o dia da data inserida
 
         // Constrói a data do gasto fixo para o mês selecionado no menu, usando o dia da data inserida
-        const actualFixedDate = new Date(currentYearFixed, currentMonthFixed - 1, fixedDay);
-        if (actualFixedDate.getMonth() !== (currentMonthFixed - 1)) {
-            actualFixedDate.setDate(0); // Ajusta para o último dia do mês se o dia exceder
+        const formattedDateForMonth = new Date(currentYearSelected, currentMonthSelected - 1, dayOfExpense);
+        if (formattedDateForMonth.getMonth() !== (currentMonthSelected - 1)) {
+            formattedDateForMonth.setDate(0); // Ajusta para o último dia do mês se o dia exceder
         }
-        const formattedActualFixedDate = actualFixedDate.toISOString().split('T')[0];
+        const finalDateToSave = formattedDateForMonth.toISOString().split('T')[0];
+
 
         if (id) {
             // Edição de gasto fixo
-            showConfirmModal('Alterar dado em :\nOpção 1 - No mês selecionado\nOpção 2: Todos os meses', (response) => {
-                if (response === true) { // Opção 1: No mês selecionado
+            showConfirmModal('Alterar dado em :', 
+                             (response) => {
+                if (response === 'local') { // No mês selecionado
                     const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
                     if (index !== -1) {
                         currentMonthData.fixedExpenses[index] = { 
                             ...currentMonthData.fixedExpenses[index], 
                             name, 
-                            date: formattedActualFixedDate, // Data sempre do mês atual selecionado
+                            date: finalDateToSave, // Data sempre do mês atual selecionado
                             paymentMethodId, 
                             categoryId, 
                             value 
@@ -1046,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderCurrentMonthData();
                     closeModal(document.getElementById('fixedExpenseModal'));
                     alert('Gasto fixo atualizado apenas no mês selecionado.');
-                } else if (response === false) { // Opção 2: Todos os meses (subsequentes)
+                } else if (response === 'global') { // Todos os meses (subsequentes)
                     const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
                         const [yearA, monthA] = a.split('-').map(Number);
                         const [yearB, monthB] = b.split('-').map(Number);
@@ -1063,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (index !== -1) {
                             // Ajusta a data para o ano e mês do mês atual do loop, mantendo o dia original
                             const [loopYear, loopMonth] = monthKey.split('-').map(Number);
-                            const newDateForLoopMonth = new Date(loopYear, loopMonth - 1, fixedDay);
+                            const newDateForLoopMonth = new Date(loopYear, loopMonth - 1, dayOfExpense); // Usa o DIA original
                             if (newDateForLoopMonth.getMonth() !== (loopMonth - 1)) {
                                 newDateForLoopMonth.setDate(0);
                             }
@@ -1084,10 +1115,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeModal(document.getElementById('fixedExpenseModal'));
                     alert('Gasto fixo atualizado em todos os meses subsequentes.');
                 }
-            });
+            }, 
+            'No mês selecionado', 'Todos os meses'); // Labels para os botões do modal customizado
         } else {
             // Adicionando um NOVO gasto fixo (comportamento existente)
-            const newExpense = { id: generateId(), name, date: formattedActualFixedDate, paymentMethodId, categoryId, value };
+            const newExpense = { id: generateId(), name, date: finalDateToSave, paymentMethodId, categoryId, value };
             currentMonthData.fixedExpenses.push(newExpense);
             saveData();
             renderCurrentMonthData();
@@ -1132,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const valuePerInstallment = parseFloat(document.getElementById('installmentValue').value);
 
         const currentMonthData = getCurrentMonthData();
-        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
+        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Pega o ano e mês do mês ATUALMENTE SELECIONADO NO MENU
 
         // Extrai APENAS O DIA da data de compra digitada pelo usuário
         const purchaseDay = new Date(purchaseDateFromInput).getDate();
@@ -1153,24 +1185,27 @@ document.addEventListener('DOMContentLoaded', () => {
             // A originalDate (seriesStartDate) da série mestre será atualizada para refletir a nova data de início da série se for alterada,
             // e migrateInstallments() recriará a série.
             
-            showConfirmModal('Alterar dados de Compra Parcelada em :\nOpção 1 - Somente neste mês (não recomendado)\nOpção 2: Todos os meses (altera a série de parcelas)', (response) => {
-                if (response === true) { // Opção 1: Somente neste mês (NÃO recomendado para parcelas globais)
+            showConfirmModal('Alterar dados de Compra Parcelada em :\nOpção 1 - Somente neste mês (não recomendado)\nOpção 2: Todos os meses (altera a série de parcelas)', 
+                             (response) => {
+                if (response === 'local') { // Opção 1: Somente neste mês (NÃO recomendado para parcelas globais)
                     const index = currentMonthData.installments.findIndex(inst => inst.id === id);
                     if (index !== -1) {
                         currentMonthData.installments[index] = {
                             ...currentMonthData.installments[index],
                             name: name,
                             purchaseDate: purchaseDateFromInput, // Atualiza a data de compra visualmente
-                            // Não altera totalInstallments nem originalDate (seriesStartDate) aqui
+                            totalInstallments: totalInstallments, // AGORA ATUALIZA O TOTAL DE PARCELAS TAMBÉM
                             paymentMethodId: paymentMethodId,
                             categoryId: categoryId,
                             valuePerInstallment: valuePerInstallment
+                            // originalDate (seriesStartDate) e currentDate não são alterados em edição
+                            // pois são recalculados pela migrateInstallments
                         };
                     }
                     saveData();
                     renderCurrentMonthData();
                     alert('Atenção: A parcela foi alterada apenas neste mês. A série completa pode não estar consistente. Considere a opção "Todos os meses" para alterações futuras.');
-                } else if (response === false) { // Opção 2: Todos os meses (RECOMENDADO para parcelas)
+                } else if (response === 'global') { // Opção 2: Todos os meses (RECOMENDADO para parcelas)
                     // Encontra a definição mestre da parcela para atualizar todos os meses
                     // Itera por *todos* os meses para encontrar e atualizar o item com o ID correspondente
                     Object.keys(allMonthsData).forEach(monthKey => {
@@ -1183,7 +1218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 name: name,
                                 purchaseDate: purchaseDateFromInput, // Atualiza a data de compra
                                 originalDate: formattedSeriesStartDate, // Atualiza a data de início da série
-                                totalInstallments: totalInstallments, // Atualiza o total de parcelas
+                                totalInstallments: totalInstallments, // ATUALIZA O TOTAL DE PARCELAS
                                 paymentMethodId: paymentMethodId,
                                 categoryId: categoryId,
                                 valuePerInstallment: valuePerInstallment
@@ -1194,7 +1229,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderCurrentMonthData(); // Disparará migrateInstallments() que recriará a série
                     alert('Compra parcelada atualizada em todos os meses subsequentes.');
                 }
-            });
+            }, 
+            'No mês selecionado', 'Todos os meses'); // Labels para os botões do modal customizado
         } else {
             // Adicionando uma NOVA compra parcelada
             const newInstallment = {
@@ -1490,6 +1526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const masterInstallmentDefinitions = new Map();
 
         // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
+        // Agora o 'originalDate' na definição mestra será o 'seriesStartDate'
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
@@ -1640,12 +1677,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                showConfirmModal('Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**', (shouldReplace) => {
-                    if (shouldReplace) {
+                showConfirmModal('Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**', (response) => { // response pode ser true/false
+                    if (response === true) { // Se for 'Sim' do genericConfirmModal
                         allMonthsData = importedData;
                         currentMonthKey = Object.keys(allMonthsData).sort()[0];
                         alert('Dados substituídos com sucesso!');
-                    } else {
+                    } else if (response === false) { // Se for 'Não' do genericConfirmModal
                         let newMonthsAdded = 0;
                         let monthsUpdated = 0;
 
