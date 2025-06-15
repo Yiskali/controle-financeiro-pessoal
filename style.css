@@ -1,27 +1,27 @@
 /* Paleta de Cores */
 :root {
     --background-color: #CA8955; /* bege claro */
-    --header-bg-color: #CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */
+    --header-bg-color:  #CA8955; /* bege claro */ /* Fundo do menu principal (do resumo) */ 
     --card-income-bg: #A9A515; /* verde oliva */
     --card-expenses-bg: #5F744A; /* verde azeitona */
     --card-balance-bg: #A78C74; /* bege arroxeado */
     --text-color-title: #491000; /* Cor da fonte dos títulos do resumo - marrom escuro */
     --balance-positive-color: #274e13; /* verde escuro */
     --balance-negative-color: #461D17; /* vinho amarronzado */
-    --terracota: #BC4610; /* terracota (cor de destaque principal) */
-    --olive-green: #808000; /* verde oliva (original) */
-    --beige: #8C4728; /* capuccino (para fundos de lista/hover) */
-    --light-gray: #BC4610; /* terracota (para fundo da barra de abas e botões não ativos) */
-    --dark-text: #dad0b5; /* cinza clarissimo (para texto principal) */
+    --terracota: #CA8955; /* bege claro (mantido como você especificou) */
+    --olive-green: #808000;
+    --beige: #8C4728; /* capuccino */
+    --light-gray: #BC4610; /* terracota (mantido como você especificou) */
+    --dark-text: #dad0b5; /* cinza clarissimo (mantido como você especificou) */
     --light-text: #fff; /* branco */
-    --table-header-bg: #491000; /* marrom escuro (para cabeçalhos de tabela) */
+    --table-header-bg: #491000; /* marrom escuro (mantido como você especificou) */
     --table-row-even: #D4A076; /* bege mais claro */
     --table-row-odd: #CA8955; /* bege claro */
     --button-bg: #A9A515;  /* verde oliva (botões iniciais) */
-    --button-hover-bg: #8c4728; /* capuccino (hover para botões) */
-    --modal-bg: rgba(0, 0, 0, 0.5); /* fundo do modal */
-    --modal-content-bg: #808000; /* fundo do conteúdo do modal */
-    --card-saldo-regular-bg: #0C343D; /* azul marinho escuro (para card Saldo Regular) */
+    --button-hover-bg: #8c4728;
+    --modal-bg: rgba(0, 0, 0, 0.5);
+    --modal-content-bg: #808000; /* verde oliva (mantido como você especificou) */
+    --card-saldo-regular-bg: #0C343D; /* azul marinho escuro (mantido como você especificou) */
 
     /* Novas cores para botões de Ações Rápidas - tons mais fortes */
     --action-button-category-bg: #8c4728; /* Capuccino */
@@ -41,7 +41,7 @@
 body {
     font-family: 'Rajdhani', sans-serif;
     background-color: var(--background-color);
-    color: var(--dark-text);
+    color: var(--dark-text); /* Cor do texto principal (cinza claríssimo) */
     line-height: 1.6;
 }
 
@@ -84,15 +84,16 @@ body {
 }
 
 .month-navigation select {
-    background-color: var(--beige); /* Usando --beige para o select */
-    color: var(--dark-text);
+    background-color: var(--beige); /* Capuccino para o select */
+    color: var(--dark-text); /* Texto do select cinza claríssimo */
+    border: 1px solid var(--text-color-title); /* Borda para contraste */
 }
 
 .tabs {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    background-color: var(--light-gray); /* Fundo da barra de abas - terracota */
+    background-color: var(--light-gray); /* Terracota para o fundo da barra de abas */
     padding: 10px 0;
     border-bottom: 1px solid var(--text-color-title); /* Borda marrom escuro */
 }
@@ -100,25 +101,25 @@ body {
 .tab-button {
     padding: 10px 20px;
     border: none;
-    background-color: var(--light-gray); /* Cor de fundo para botões de aba não ativos - terracota */
-    color: var(--dark-text); /* Texto mais escuro para abas não ativas */
+    background-color: var(--light-gray); /* Fundo dos botões de aba não ativos (Terracota) */
+    color: var(--dark-text); /* Texto das abas não ativas (cinza claríssimo) */
     cursor: pointer;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
     transition: background-color 0.3s ease, color 0.3s ease;
-    border-radius: 5px; /* Bordas arredondadas para todos os botões de aba */
-    margin: 0 2px; /* Pequeno espaçamento entre as abas */
+    border-radius: 5px;
+    margin: 0 2px;
 }
 
 .tab-button:hover {
-    background-color: var(--beige); /* Cor mais clara no hover */
-    color: var(--dark-text);
+    background-color: var(--beige); /* Fundo no hover (capuccino) */
+    color: var(--dark-text); /* Texto no hover (cinza claríssimo) */
 }
 
 .tab-button.active {
-    background-color: var(--terracota); /* Cor de destaque para aba ativa - terracota */
-    color: var(--light-text); /* Texto claro para aba ativa */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra para aba ativa */
+    background-color: var(--terracota); /* Fundo da aba ativa (bege claro) */
+    color: var(--light-text); /* Texto da aba ativa (branco) */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .container {
@@ -129,7 +130,7 @@ body {
 
 .tab-content {
     display: none;
-    background-color: var(--background-color); /* Usando a cor de fundo principal para o conteúdo das abas */
+    background-color: var(--background-color); /* Fundo do conteúdo das abas (bege claro) */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -162,7 +163,7 @@ body {
 .card h3 {
     margin-bottom: 10px;
     font-size: 1.3rem;
-    color: var(--text-color-title); /* Títulos dos cards com marrom escuro */
+    color: var(--text-color-title); /* Títulos dos cards (marrom escuro) */
 }
 
 .card p {
@@ -183,7 +184,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    background-color: var(--table-row-odd); /* Fundo da linha ímpar da tabela - bege claro */
+    background-color: var(--table-row-odd); /* Fundo da linha ímpar da tabela (bege claro) */
     border-radius: 8px;
     overflow: hidden;
 }
@@ -192,7 +193,7 @@ table th,
 table td {
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid var(--table-header-bg); /* Borda da tabela com marrom escuro */
+    border-bottom: 1px solid var(--table-header-bg); /* Borda da tabela (marrom escuro) */
 }
 
 table th {
@@ -203,11 +204,11 @@ table th {
 }
 
 table tbody tr:nth-child(even) {
-    background-color: var(--table-row-even); /* Fundo de linha par - bege mais claro */
+    background-color: var(--table-row-even); /* Fundo de linha par (bege mais claro) */
 }
 
 table tbody tr:hover {
-    background-color: var(--beige); /* Fundo de linha ao passar o mouse - capuccino */
+    background-color: var(--beige); /* Fundo de linha ao passar o mouse (capuccino) */
 }
 
 /* Action Buttons within tables */
@@ -261,7 +262,7 @@ table td button:hover {
 }
 
 .modal-content {
-    background-color: var(--modal-content-bg); /* Fundo do conteúdo do modal - verde oliva */
+    background-color: var(--modal-content-bg); /* Fundo do conteúdo do modal (verde oliva) */
     padding: 30px;
     border-radius: 10px;
     width: 90%;
@@ -273,7 +274,7 @@ table td button:hover {
 }
 
 .close-button {
-    color: var(--dark-text); /* Cor do 'X' do modal marrom escuro */
+    color: var(--dark-text); /* Cor do 'X' do modal (cinza claríssimo) */
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -285,21 +286,21 @@ table td button:hover {
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--terracota); /* Cor de destaque ao passar o mouse */
+    color: var(--terracota); /* Cor de destaque ao passar o mouse (bege claro) */
     text-decoration: none;
     cursor: pointer;
 }
 
 .modal-content h2 {
     margin-bottom: 20px;
-    color: var(--text-color-title); /* Título do modal marrom escuro */
+    color: var(--text-color-title); /* Título do modal (marrom escuro) */
 }
 
 .modal-content form label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
-    color: var(--dark-text); /* Labels dos formulários marrom escuro */
+    color: var(--dark-text); /* Labels dos formulários (cinza claríssimo) */
 }
 
 .modal-content form input[type="text"],
@@ -310,16 +311,16 @@ table td button:hover {
     width: calc(100% - 20px);
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid var(--text-color-title); /* Borda dos inputs e selects marrom escuro */
+    border: 1px solid var(--text-color-title); /* Borda dos inputs e selects (marrom escuro) */
     border-radius: 5px;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
-    color: var(--dark-text); /* Texto digitado nos inputs marrom escuro */
-    background-color: var(--background-color); /* Fundo dos inputs com a cor de fundo principal */
+    color: var(--dark-text); /* Texto digitado nos inputs (cinza claríssimo) */
+    background-color: var(--background-color); /* Fundo dos inputs com a cor de fundo principal (bege claro) */
 }
 
 .modal-content form button[type="submit"] {
-    background-color: var(--table-header-bg); /* Botão salvar do modal com cor de cabeçalho de tabela */
+    background-color: var(--table-header-bg); /* Botão salvar do modal (marrom escuro) */
     color: var(--light-text);
     border: none;
     padding: 12px 25px;
@@ -331,32 +332,32 @@ table td button:hover {
 }
 
 .modal-content form button[type="submit"]:hover {
-    background-color: var(--action-button-clear-bg); /* Cor de hover para botões de modal - vinho amarronzado */
+    background-color: var(--button-hover-bg); /* Cor de hover para botões de modal (capuccino) */
 }
 
 /* Estilos para o NOVO modal customizado de confirmação */
 #customConfirmModal .modal-content {
     text-align: center;
-    padding: 40px; /* Mais padding para a mensagem */
-    background-color: var(--modal-content-bg); /* Fundo do modal de confirmação customizado - verde oliva */
+    padding: 40px;
+    background-color: var(--modal-content-bg); /* Fundo do modal de confirmação customizado (verde oliva) */
 }
 
 #customConfirmModal .confirm-message-text {
     font-size: 1.2rem;
     margin-bottom: 30px;
-    color: var(--dark-text); /* Texto da mensagem de confirmação customizada - marrom escuro */
+    color: var(--dark-text); /* Texto da mensagem de confirmação customizada (cinza claríssimo) */
     line-height: 1.5;
 }
 
 .confirm-buttons-row {
     display: flex;
     justify-content: center;
-    gap: 20px; /* Espaçamento entre os botões de opção */
+    gap: 20px;
     margin-top: 20px;
 }
 
 .modal-confirm-button {
-    background-color: var(--table-header-bg); /* Botões do modal de confirmação customizado - marrom escuro */
+    background-color: var(--table-header-bg); /* Botões do modal de confirmação customizado (marrom escuro) */
     color: var(--light-text);
     border: none;
     padding: 12px 25px;
@@ -366,11 +367,11 @@ table td button:hover {
     font-size: 1rem;
     font-weight: bold;
     transition: background-color 0.3s ease;
-    min-width: 150px; /* Garante que os botões tenham um tamanho mínimo */
+    min-width: 150px;
 }
 
 .modal-confirm-button:hover {
-    background-color: var(--action-button-clear-bg); /* Hover para botões de confirmação - vinho amarronzado */
+    background-color: var(--button-hover-bg); /* Hover para botões de confirmação (capuccino) */
 }
 
 
@@ -383,14 +384,14 @@ table td button:hover {
 
 #categoryList li,
 #paymentMethodList li {
-    background-color: var(--beige); /* Fundo das listas de categoria/pm - capuccino */
+    background-color: var(--beige); /* Fundo das listas de categoria/pm (capuccino) */
     padding: 10px;
     margin-bottom: 8px;
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--dark-text); /* Texto das listas marrom escuro */
+    color: var(--dark-text); /* Texto das listas (cinza claríssimo) */
 }
 
 #categoryList li button,
@@ -411,59 +412,58 @@ table td button:hover {
 
 /* Estilos para a NOVA ABA DE AÇÕES RÁPIDAS (GRID) */
 #quick-actions {
-    /* Herda estilos de .tab-content */
     padding-top: 20px;
-    text-align: center; /* Centraliza o h2 */
+    text-align: center;
 }
 
 #quick-actions h2 {
     margin-bottom: 25px;
-    color: var(--terracota);
+    color: var(--terracota); /* Título da aba (bege claro) */
 }
 
 .action-buttons-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* FORÇA 3 COLUNAS DE TAMANHO IGUAL */
-    gap: 25px; /* Espaçamento entre os botões */
-    justify-items: center; /* Centraliza itens na grade */
-    align-items: start; /* Alinha itens ao topo em suas células */
-    max-width: 900px; /* Limita a largura da grade de botões para centralizar */
-    margin: 0 auto; /* Centraliza a grade de botões na página */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    justify-items: center;
+    align-items: start;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .action-grid-button {
     display: flex;
-    flex-direction: column; /* Ícone acima do texto */
-    align-items: center; /* Centraliza horizontalmente ícone e texto */
-    justify-content: center; /* Centraliza verticalmente */
-    width: 100%; /* Ocupa 100% da largura da célula da grade */
-    aspect-ratio: 1 / 1; /* Mantém a proporção de 1:1 (quadrado) */
-    padding: 15px; /* Adiciona padding interno */
-    border-radius: 15px; /* Bordas mais arredondadas */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 15px;
+    border-radius: 15px;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--light-text); /* Texto claro para contraste */
+    color: var(--light-text); /* Texto dos botões da grade (branco) */
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para destaque */
-    text-decoration: none; /* Garante que links dentro de botões não tenham sublinhado */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
 }
 
 .action-grid-button i {
-    font-size: 3.5rem; /* Tamanho grande para os ícones */
-    margin-bottom: 10px; /* Espaçamento entre ícone e texto */
-    color: var(--light-text); /* Cor do ícone */
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    color: var(--light-text); /* Ícones dos botões da grade (branco) */
 }
 
 .action-grid-button span {
     text-align: center;
     line-height: 1.2;
-    display: block; /* Garante que o span ocupe a própria linha */
+    display: block;
 }
 
-/* Cores específicas para cada tipo de botão (AGORA USANDO nth-of-type!) */
+/* Cores específicas para cada tipo de botão (mantidas as que você forneceu) */
 #quick-actions .action-buttons-grid button:nth-of-type(1) { /* Gerenciar Categorias */
     background-color: var(--action-button-category-bg);
 }
@@ -476,36 +476,35 @@ table td button:hover {
 #quick-actions .action-buttons-grid button:nth-of-type(4) { /* Exportar Dados */
     background-color: var(--action-button-export-bg);
 }
-#quick-actions .action-buttons-grid button:nth-of-type(5) { /* Importar Dados - AGORA É O 5º BOTÃO REAL */
+#quick-actions .action-buttons-grid button:nth-of-type(5) { /* Importar Dados */
     background-color: var(--action-button-import-bg);
 }
-#quick-actions .action-buttons-grid button:nth-of-type(6) { /* Limpar Dados Transacionais - AGORA É O 6º BOTÃO REAL */
+#quick-actions .action-buttons-grid button:nth-of-type(6) { /* Limpar Dados Transacionais */
     background-color: var(--action-button-clear-bg);
 }
 
 .action-grid-button:hover {
-    transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
+    transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    filter: brightness(1.1); /* Um pouco mais claro no hover */
+    filter: brightness(1.1);
 }
-
 
 /* Chart Container */
 .chart-container {
     width: 70%;
     max-width: 600px;
     margin: 20px auto;
-    background-color: var(--table-row-odd);
+    background-color: var(--table-row-odd); /* Fundo do container do gráfico (bege claro) */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsividade para a Grade de Botões */
-@media (max-width: 992px) { /* Em telas médias, 2 colunas */
+@media (max-width: 992px) {
     .action-buttons-grid {
         grid-template-columns: repeat(2, 1fr);
-        max-width: 600px; /* Ajusta a largura máxima */
+        max-width: 600px;
     }
 }
 
@@ -543,17 +542,17 @@ table td button:hover {
         padding: 0 10px;
     }
 
-    #quick-actions { /* Usando o ID da seção agora */
+    #quick-actions {
         padding: 0 10px;
     }
     
     .action-buttons-grid {
-        grid-template-columns: repeat(1, 1fr); /* 1 coluna em mobile */
-        max-width: 300px; /* Largura para um único botão centralizado */
+        grid-template-columns: repeat(1, 1fr);
+        max-width: 300px;
     }
     .action-grid-button {
-        width: 100%; /* Ocupa a largura total da célula (agora 100%) */
-        height: 120px; /* Altura um pouco menor em mobile */
+        width: 100%;
+        height: 120px;
         padding: 10px;
     }
     .action-grid-button i {
