@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const installmentCategorySelect = document.getElementById('installmentCategory');
     const categoryTypeSelect = document.getElementById('categoryType');
     const expectedExpenseDiv = document.getElementById('expectedExpenseDiv');
+    const fixedExpenseDateInput = document.getElementById('fixedExpenseDate'); // Adicionado para facilitar o acesso
     const paymentMethodNameInput = document.getElementById('paymentMethodName');
     const initialBalanceDiv = document.getElementById('initialBalanceDiv');
     const paymentMethodColorInput = document.getElementById('paymentMethodColor');
@@ -719,7 +720,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'fixedExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
+                        <td>${formatDisplayDate(item.date)}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -732,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
+                        <td>${item.date}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -745,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.purchaseDate)}</td> <!-- Formata e exibe a purchaseDate aqui -->
+                        <td>${formatDisplayDate(item.purchaseDate)}</td> <!-- Exibir a purchaseDate -->
                         <td>${item.currentInstallment}/${item.totalInstallments}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
@@ -1016,19 +1017,83 @@ document.addEventListener('DOMContentLoaded', () => {
         const value = parseFloat(document.getElementById('fixedExpenseValue').value);
 
         const currentMonthData = getCurrentMonthData();
+        const [currentYearFixed, currentMonthFixed] = currentMonthKey.split('-').map(Number);
+        const fixedDay = new Date(date).getDate(); // Pega o dia da data inserida
+
+        // Constrói a data do gasto fixo para o mês selecionado no menu, usando o dia da data inserida
+        const actualFixedDate = new Date(currentYearFixed, currentMonthFixed - 1, fixedDay);
+        if (actualFixedDate.getMonth() !== (currentMonthFixed - 1)) {
+            actualFixedDate.setDate(0); // Ajusta para o último dia do mês se o dia exceder
+        }
+        const formattedActualFixedDate = actualFixedDate.toISOString().split('T')[0];
 
         if (id) {
-            const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
-            if (index !== -1) {
-                currentMonthData.fixedExpenses[index] = { ...currentMonthData.fixedExpenses[index], name, date, paymentMethodId, categoryId, value };
-            }
+            // Edição de gasto fixo
+            showConfirmModal('Alterar dado em :\nOpção 1 - No mês selecionado\nOpção 2: Todos os meses', (response) => {
+                if (response === true) { // Opção 1: No mês selecionado
+                    const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
+                    if (index !== -1) {
+                        currentMonthData.fixedExpenses[index] = { 
+                            ...currentMonthData.fixedExpenses[index], 
+                            name, 
+                            date: formattedActualFixedDate, // Data sempre do mês atual selecionado
+                            paymentMethodId, 
+                            categoryId, 
+                            value 
+                        };
+                    }
+                    saveData();
+                    renderCurrentMonthData();
+                    closeModal(document.getElementById('fixedExpenseModal'));
+                    alert('Gasto fixo atualizado apenas no mês selecionado.');
+                } else if (response === false) { // Opção 2: Todos os meses (subsequentes)
+                    const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
+                        const [yearA, monthA] = a.split('-').map(Number);
+                        const [yearB, monthB] = b.split('-').map(Number);
+                        if (yearA !== yearB) return yearA - yearB;
+                        return monthA - monthB;
+                    });
+                    const startIndex = sortedMonths.indexOf(currentMonthKey); // Começa do mês atual
+
+                    for (let i = startIndex; i < sortedMonths.length; i++) {
+                        const monthKey = sortedMonths[i];
+                        let monthData = allMonthsData[monthKey];
+                        const index = monthData.fixedExpenses.findIndex(exp => exp.id === id);
+
+                        if (index !== -1) {
+                            // Ajusta a data para o ano e mês do mês atual do loop, mantendo o dia original
+                            const [loopYear, loopMonth] = monthKey.split('-').map(Number);
+                            const newDateForLoopMonth = new Date(loopYear, loopMonth - 1, fixedDay);
+                            if (newDateForLoopMonth.getMonth() !== (loopMonth - 1)) {
+                                newDateForLoopMonth.setDate(0);
+                            }
+                            const formattedDateForLoopMonth = newDateForLoopMonth.toISOString().split('T')[0];
+
+                            monthData.fixedExpenses[index] = { 
+                                ...monthData.fixedExpenses[index], 
+                                name, 
+                                date: formattedDateForLoopMonth, // Data do mês do loop
+                                paymentMethodId, 
+                                categoryId, 
+                                value 
+                            };
+                        }
+                    }
+                    saveData();
+                    renderCurrentMonthData();
+                    closeModal(document.getElementById('fixedExpenseModal'));
+                    alert('Gasto fixo atualizado em todos os meses subsequentes.');
+                }
+            });
         } else {
-            const newExpense = { id: generateId(), name, date, paymentMethodId, categoryId, value };
+            // Adicionando um NOVO gasto fixo (comportamento existente)
+            const newExpense = { id: generateId(), name, date: formattedActualFixedDate, paymentMethodId, categoryId, value };
             currentMonthData.fixedExpenses.push(newExpense);
+            saveData();
+            renderCurrentMonthData();
+            closeModal(document.getElementById('fixedExpenseModal'));
+            alert('Gasto fixo adicionado com sucesso!');
         }
-        saveData();
-        renderCurrentMonthData();
-        closeModal(document.getElementById('fixedExpenseModal'));
     });
 
     monthlyExpenseForm.addEventListener('submit', (e) => {
@@ -1060,14 +1125,14 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('installmentId').value;
         const name = document.getElementById('installmentName').value;
-        const purchaseDateFromInput = document.getElementById('installmentDate').value; // Data que o usuário digitou (ex: '2024-06-15')
-        const totalInstallments = parseInt(document.getElementById('installmentTotal').value);
+        const purchaseDateFromInput = document.getElementById('installmentDate').value; // Data que o usuário digitou (ex: '2025-01-12')
+        const totalInstallments = parseInt(document.getElementById('installmentTotal').value); // Nova quantidade de parcelas
         const paymentMethodId = document.getElementById('installmentPaymentMethod').value;
         const categoryId = document.getElementById('installmentCategory').value;
         const valuePerInstallment = parseFloat(document.getElementById('installmentValue').value);
 
         const currentMonthData = getCurrentMonthData();
-        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Pega o ano e mês do mês ATUALMENTE SELECIONADO NO MENU
+        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
 
         // Extrai APENAS O DIA da data de compra digitada pelo usuário
         const purchaseDay = new Date(purchaseDateFromInput).getDate();
@@ -1084,23 +1149,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (id) {
             // Edição de parcela existente:
-            // Percorre *todos* os meses para atualizar a definição mestre da parcela
-            // com os novos valores globais (totalInstallments, name, valuePerInstallment, etc.)
-            Object.keys(allMonthsData).forEach(monthKey => {
-                let monthData = allMonthsData[monthKey];
-                const index = monthData.installments.findIndex(inst => inst.id === id);
-                if (index !== -1) {
-                    monthData.installments[index] = {
-                        ...monthData.installments[index],
-                        name: name,
-                        purchaseDate: purchaseDateFromInput, // Salva a data de compra atualizada
-                        totalInstallments: totalInstallments, // Atualiza o total de parcelas
-                        paymentMethodId: paymentMethodId,
-                        categoryId: categoryId,
-                        valuePerInstallment: valuePerInstallment
-                        // originalDate (seriesStartDate) e currentDate não são alterados em edição
-                        // pois são recalculados pela migrateInstallments
-                    };
+            // A purchaseDate (data da compra visual) e totalInstallments (total de parcelas) podem ser editados.
+            // A originalDate (seriesStartDate) da série mestre será atualizada para refletir a nova data de início da série se for alterada,
+            // e migrateInstallments() recriará a série.
+            
+            showConfirmModal('Alterar dados de Compra Parcelada em :\nOpção 1 - Somente neste mês (não recomendado)\nOpção 2: Todos os meses (altera a série de parcelas)', (response) => {
+                if (response === true) { // Opção 1: Somente neste mês (NÃO recomendado para parcelas globais)
+                    const index = currentMonthData.installments.findIndex(inst => inst.id === id);
+                    if (index !== -1) {
+                        currentMonthData.installments[index] = {
+                            ...currentMonthData.installments[index],
+                            name: name,
+                            purchaseDate: purchaseDateFromInput, // Atualiza a data de compra visualmente
+                            // Não altera totalInstallments nem originalDate (seriesStartDate) aqui
+                            paymentMethodId: paymentMethodId,
+                            categoryId: categoryId,
+                            valuePerInstallment: valuePerInstallment
+                        };
+                    }
+                    saveData();
+                    renderCurrentMonthData();
+                    alert('Atenção: A parcela foi alterada apenas neste mês. A série completa pode não estar consistente. Considere a opção "Todos os meses" para alterações futuras.');
+                } else if (response === false) { // Opção 2: Todos os meses (RECOMENDADO para parcelas)
+                    // Encontra a definição mestre da parcela para atualizar todos os meses
+                    // Itera por *todos* os meses para encontrar e atualizar o item com o ID correspondente
+                    Object.keys(allMonthsData).forEach(monthKey => {
+                        let monthData = allMonthsData[monthKey];
+                        const index = monthData.installments.findIndex(inst => inst.id === id);
+                        if (index !== -1) {
+                            // Atualiza os campos globais da série de parcelas
+                            monthData.installments[index] = {
+                                ...monthData.installments[index],
+                                name: name,
+                                purchaseDate: purchaseDateFromInput, // Atualiza a data de compra
+                                originalDate: formattedSeriesStartDate, // Atualiza a data de início da série
+                                totalInstallments: totalInstallments, // Atualiza o total de parcelas
+                                paymentMethodId: paymentMethodId,
+                                categoryId: categoryId,
+                                valuePerInstallment: valuePerInstallment
+                            };
+                        }
+                    });
+                    saveData();
+                    renderCurrentMonthData(); // Disparará migrateInstallments() que recriará a série
+                    alert('Compra parcelada atualizada em todos os meses subsequentes.');
                 }
             });
         } else {
@@ -1119,11 +1211,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 status: 'Ativa'
             };
             currentMonthData.installments.push(newInstallment);
+            saveData();
+            renderCurrentMonthData();
+            // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
+            resetForm('installmentModal');
         }
-        saveData();
-        renderCurrentMonthData();
-        // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
-        resetForm('installmentModal');
     });
 
     categoryForm.addEventListener('submit', (e) => {
@@ -1336,20 +1428,61 @@ document.addEventListener('DOMContentLoaded', () => {
             return monthA - monthB;
         });
 
-        for (let i = 0; i < sortedMonths.length - 1; i++) {
-            const currentMonthKey = sortedMonths[i];
-            const nextMonthKey = sortedMonths[i + 1];
+        // Este loop agora é executado para cada mês no 'allMonthsData' para garantir a atualização
+        const fixedExpensesToPropagate = new Map(); // Map<id, {name, paymentMethodId, categoryId, value}>
 
-            const currentMonthData = allMonthsData[currentMonthKey];
-            const nextMonthData = allMonthsData[nextMonthKey];
-
-            if (currentMonthData && nextMonthData) {
-                currentMonthData.fixedExpenses.forEach(fixedExp => {
-                    if (!nextMonthData.fixedExpenses.some(exp => exp.id === fixedExp.id)) {
-                        nextMonthData.fixedExpenses.push({ ...fixedExp });
-                    }
+        // Coleta as últimas definições para cada gasto fixo
+        for (let i = 0; i < sortedMonths.length; i++) {
+            const monthKey = sortedMonths[i];
+            allMonthsData[monthKey].fixedExpenses.forEach(fixedExp => {
+                // Guarda a versão mais recente de cada gasto fixo
+                fixedExpensesToPropagate.set(fixedExp.id, {
+                    id: fixedExp.id,
+                    name: fixedExp.name,
+                    paymentMethodId: fixedExp.paymentMethodId,
+                    categoryId: fixedExp.categoryId,
+                    value: fixedExp.value
                 });
-            }
+            });
+        }
+
+        // Propaga (ou atualiza) os gastos fixos para todos os meses
+        for (let i = 0; i < sortedMonths.length; i++) {
+            const monthKey = sortedMonths[i];
+            let monthData = allMonthsData[monthKey];
+            let updatedFixedExpensesForMonth = [];
+            const existingFixedExpIdsInMonth = new Set(monthData.fixedExpenses.map(exp => exp.id));
+
+            // Adiciona/Atualiza os gastos fixos propagados
+            fixedExpensesToPropagate.forEach(masterFixedExp => {
+                const existingIndex = monthData.fixedExpenses.findIndex(exp => exp.id === masterFixedExp.id);
+                if (existingIndex !== -1) {
+                    // Atualiza o gasto fixo existente no mês com os dados mais recentes
+                    // Mas mantém a data original daquele mês
+                    const originalDateInMonth = monthData.fixedExpenses[existingIndex].date;
+                    updatedFixedExpensesForMonth.push({
+                        ...masterFixedExp,
+                        date: originalDateInMonth // Mantém a data que já estava neste mês
+                    });
+                } else {
+                    // Se não existe, adiciona como um novo gasto fixo naquele mês
+                    // Com a data ajustada para o ano/mês do mês atual do loop e um dia padrão (ex: 1º ou dia original se existir)
+                    const [year, month] = monthKey.split('-').map(Number);
+                    const defaultDay = new Date(masterFixedExp.date).getDate(); // Dia do gasto fixo original
+                    const newDate = new Date(year, month - 1, defaultDay);
+                    if (newDate.getMonth() !== (month - 1)) { newDate.setDate(0); } // Ajusta para último dia se for o caso
+                    const formattedDate = newDate.toISOString().split('T')[0];
+
+                    updatedFixedExpensesForMonth.push({
+                        ...masterFixedExp,
+                        date: formattedDate // Define a data para o mês atual
+                    });
+                }
+            });
+            
+            // Filtra e mantém apenas os gastos fixos que foram explicitamente adicionados ou atualizados
+            // e remove quaisquer que não fazem parte do master list (se algo foi excluído globalmente)
+            monthData.fixedExpenses = updatedFixedExpensesForMonth;
         }
     };
 
@@ -1357,7 +1490,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const masterInstallmentDefinitions = new Map();
 
         // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
-        // Agora o 'originalDate' na definição mestra será o 'seriesStartDate'
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
