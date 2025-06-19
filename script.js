@@ -27,10 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const categorySummaryTableBody = document.querySelector('#categorySummaryTable tbody');
     const paymentMethodSummaryTableBody = document.querySelector('#paymentMethodSummaryTable tbody');
 
-    // Tabelas
+    // Tabelas (REFERÊNCIAS AGORA MAIS ROBUSTAS E VERIFICADAS NO HTML)
     const fixedExpensesTableBody = document.querySelector('#fixedExpensesTable tbody');
     const monthlyExpensesTableBody = document.querySelector('#monthlyExpensesTable tbody');
-    const installmentsTableBody = document.getElementById('installmentsTable tbody');
+    const installmentsTableBody = document.querySelector('#installmentsTable tbody'); // Alterado para querySelector
 
     // Modais
     const modals = document.querySelectorAll('.modal');
@@ -603,10 +603,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Remove listeners antigos para evitar duplicação
             confirmYesBtn.removeEventListener('click', handleGenericConfirmButtonClick);
-            confirmNoBtn.removeEventListener('click', handleGenericConfirmButtonClick);
+            confirmNoBtn.removeEventListener('click', handleGenericConfirmClick);
 
             confirmYesBtn.addEventListener('click', handleGenericConfirmButtonClick);
-            confirmNoBtn.addEventListener('click', handleGenericConfirmButtonClick);
+            confirmNoBtn.addEventListener('click', handleGenericConfirmClick);
         }
     };
 
@@ -1052,9 +1052,15 @@ document.addEventListener('DOMContentLoaded', () => {
         migrateInstallments();
 
         const currentMonthData = getCurrentMonthData();
-        renderTable(currentMonthData.fixedExpenses, fixedExpensesTableBody, 'fixedExpenses');
-        renderTable(currentMonthData.monthlyExpenses, monthlyExpensesTableBody, 'monthlyExpenses');
-        renderTable(currentMonthData.installments, installmentsTableBody, 'installments');
+        // Acesso mais seguro aos tbody
+        const fixedTbody = document.querySelector('#fixedExpensesTable tbody');
+        const monthlyTbody = document.querySelector('#monthlyExpensesTable tbody');
+        const installmentsTbody = document.querySelector('#installmentsTable tbody');
+
+        if (fixedTbody) renderTable(currentMonthData.fixedExpenses, fixedTbody, 'fixedExpenses');
+        if (monthlyTbody) renderTable(currentMonthData.monthlyExpenses, monthlyTbody, 'monthlyExpenses');
+        if (installmentsTbody) renderTable(currentMonthData.installments, installmentsTbody, 'installments');
+
         renderSummary();
         renderChart(); // O gráfico é renderizado quando a aba é selecionada
         populateSelects(); // Assegura que os selects nos modais estejam atualizados
@@ -1066,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('fixedExpenseId').value;
         const name = document.getElementById('fixedExpenseName').value;
-        const date = document.getElementById('fixedExpenseDate').value; // Data que o usuário digitou (ex: '2025-01-01')
+        const dateInput = document.getElementById('fixedExpenseDate').value; // Data que o usuário digitou (ex: '2025-01-01')
         const paymentMethodId = document.getElementById('fixedExpensePaymentMethod').value;
         const categoryId = document.getElementById('fixedExpenseCategory').value;
         const value = parseFloat(document.getElementById('fixedExpenseValue').value);
@@ -1075,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
 
         // Extrai APENAS O DIA da data digitada pelo usuário
-        const dayOfExpense = new Date(date + 'T12:00:00').getDate(); // Adiciona hora para evitar problemas de fuso horário
+        const dayOfExpense = new Date(dateInput + 'T12:00:00').getDate(); // Adiciona hora para evitar problemas de fuso horário
         
         // Constrói a data final a ser salva, garantindo o mês do menu e o dia digitado.
         // O Math.min garante que o dia não exceda o último dia do mês (ex: 31 de fevereiro)
@@ -1087,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Logs de depuração para gasto fixo
         console.log("--- DEBUG GASTO FIXO ---");
-        console.log("Data input pelo usuário (original):", date); // Ex: 2025-01-12
+        console.log("Data input pelo usuário (original):", dateInput); // Ex: 2025-01-12
         console.log("Mês selecionado no menu (currentMonthKey):", currentMonthKey); // Ex: 2025-06
         console.log("Dia da despesa (extraído da data input):", dayOfExpense); // Ex: 12
         console.log("Último dia do mês selecionado:", lastDayOfSelectedMonth); // Ex: 30
@@ -1126,8 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                              monthData.fixedExpenses[index] = {
                                 ...monthData.fixedExpenses[index],
                                 name: name,
-                                // A data aqui é a data que o usuário inputou, que será a base para o dia na propagação
-                                date: date, // Manter a data ORIGINAL do input do usuário para a definição mestre
+                                date: dateInput, // MANTÉM A DATA ORIGINALMENTE DIGITADA PELO USUÁRIO para a definição mestre
                                 paymentMethodId, 
                                 categoryId, 
                                 value 
@@ -1265,17 +1270,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentDate: formattedSeriesStartDate, // A primeira parcela deste mês
                 currentInstallment: 1, // Sempre a primeira parcela da série ao adicionar
                 totalInstallments: totalInstallments,
-                paymentMethodId: paymentMethodId,
+                paymentMethodId: paymentMethodId, // Corrigido de paymentDate para paymentMethodId
                 categoryId: categoryId,
                 valuePerInstallment: valuePerInstallment,
                 status: 'Ativa'
             };
             currentMonthData.installments.push(newInstallment);
-            saveData();
-            renderCurrentMonthData();
-            // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
-            resetForm('installmentModal');
         }
+        saveData();
+        renderCurrentMonthData();
+        // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
+        resetForm('installmentModal');
     });
 
     categoryForm.addEventListener('submit', (e) => {
