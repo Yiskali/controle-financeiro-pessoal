@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tabelas
     const fixedExpensesTableBody = document.querySelector('#fixedExpensesTable tbody');
     const monthlyExpensesTableBody = document.querySelector('#monthlyExpensesTable tbody');
-    const installmentsTableBody = document.querySelector('#installmentsTable tbody');
+    const installmentsTableBody = document.getElementById('installmentsTable tbody');
 
     // Modais
     const modals = document.querySelectorAll('.modal');
@@ -1128,9 +1128,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 name: name,
                                 // A data aqui é a data que o usuário inputou, que será a base para o dia na propagação
                                 date: date, // Manter a data ORIGINAL do input do usuário para a definição mestre
-                                paymentMethodId: paymentMethodId,
-                                categoryId: categoryId,
-                                value: value
+                                paymentMethodId, 
+                                categoryId, 
+                                value 
                             };
                         }
                     });
@@ -1767,5 +1767,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
-
-
