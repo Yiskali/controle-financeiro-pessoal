@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.date}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -1116,40 +1116,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeModal(document.getElementById('fixedExpenseModal'));
                     alert('Gasto fixo atualizado apenas no mês selecionado.');
                 } else if (response === 'global') { // Todos os meses (subsequentes)
-                    const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
-                        const [yearA, monthA] = a.split('-').map(Number);
-                        const [yearB, monthB] = b.split('-').map(Number);
-                        if (yearA !== yearB) return yearA - yearB;
-                        return monthA - monthB;
-                    });
-                    const startIndex = sortedMonths.indexOf(currentMonthKey); // Começa do mês atual
-
-                    for (let i = startIndex; i < sortedMonths.length; i++) {
-                        const monthKey = sortedMonths[i];
+                    // Atualiza a definição mestre do gasto fixo
+                    // A data original do gasto fixo (masterFixedExp.date) será a data inserida pelo usuário
+                    // para que a propagação use o dia original, mas o mês do loop
+                    Object.keys(allMonthsData).forEach(monthKey => {
                         let monthData = allMonthsData[monthKey];
                         const index = monthData.fixedExpenses.findIndex(exp => exp.id === id);
-
                         if (index !== -1) {
-                            // Ajusta a data para o ano e mês do mês atual do loop, mantendo o dia efetivo
-                            const [loopYear, loopMonth] = monthKey.split('-').map(Number);
-                            const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDay); // Usa o DIA efetivo
-                            if (newDateForLoopMonthObj.getMonth() !== (loopMonth - 1)) {
-                                newDateForLoopMonthObj.setDate(0); // Ajusta para último dia se for o caso
-                            }
-                            const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
-
-                            monthData.fixedExpenses[index] = { 
-                                ...monthData.fixedExpenses[index], 
-                                name, 
-                                date: formattedDateForLoopMonth, // Data do mês do loop
-                                paymentMethodId, 
-                                categoryId, 
-                                value 
+                             monthData.fixedExpenses[index] = {
+                                ...monthData.fixedExpenses[index],
+                                name: name,
+                                // A data aqui é a data que o usuário inputou, que será a base para o dia na propagação
+                                date: date, // Manter a data ORIGINAL do input do usuário para a definição mestre
+                                paymentMethodId: paymentMethodId,
+                                categoryId: categoryId,
+                                value: value
                             };
                         }
-                    }
+                    });
+
                     saveData();
-                    renderCurrentMonthData();
+                    renderCurrentMonthData(); // Disparará migrateFixedExpenses() que recriará a série
                     closeModal(document.getElementById('fixedExpenseModal'));
                     alert('Gasto fixo atualizado em todos os meses subsequentes.');
                 }
@@ -1494,6 +1481,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Funções de Migração de Dados ---
 
     const migrateFixedExpenses = () => {
+        console.log("--- DEBUG MIGRATE FIXED EXPENSES START ---");
         const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
             const [yearA, monthA] = a.split('-').map(Number);
             const [yearB, monthB] = b.split('-').map(Number);
@@ -1501,24 +1489,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return monthA - monthB;
         });
 
-        // Este loop agora é executado para cada mês no 'allMonthsData' para garantir a atualização
-        const fixedExpensesToPropagate = new Map(); // Map<id, {name, paymentMethodId, categoryId, value, date (original date user entered)}>
+        const fixedExpensesToPropagate = new Map(); // Map<id, {name, paymentMethodId, categoryId, value, date (original date user entered for master definition)}>
 
         // Coleta as últimas definições para cada gasto fixo
         for (let i = 0; i < sortedMonths.length; i++) {
             const monthKey = sortedMonths[i];
+            // Importante: Para a definição mestre, pegamos a 'date' que foi salva no item, que é a data do mês selecionado.
+            // Para casos de 'Todos os meses', essa 'date' já reflete o dia original e o mês da edição.
             allMonthsData[monthKey].fixedExpenses.forEach(fixedExp => {
-                // Guarda a versão mais recente de cada gasto fixo, incluindo a data que foi salva no item
                 fixedExpensesToPropagate.set(fixedExp.id, {
                     id: fixedExp.id,
                     name: fixedExp.name,
                     paymentMethodId: fixedExp.paymentMethodId,
                     categoryId: fixedExp.categoryId,
                     value: fixedExp.value,
-                    date: fixedExp.date // Adiciona a data como ela está no item
+                    date: fixedExp.date // A data salva para o item (mês do menu + dia original)
                 });
             });
         }
+        console.log("Master Fixed Expenses collected:", Array.from(fixedExpensesToPropagate.values()));
+
 
         // Propaga (ou atualiza) os gastos fixos para todos os meses
         for (let i = 0; i < sortedMonths.length; i++) {
@@ -1526,12 +1516,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let monthData = allMonthsData[monthKey];
             let updatedFixedExpensesForMonth = [];
             
+            console.log(`Processing month: ${monthKey}`);
+
             fixedExpensesToPropagate.forEach(masterFixedExp => {
-                const existingIndex = monthData.fixedExpenses.findIndex(exp => exp.id === masterFixedExp.id);
-                
-                // Constrói a data para este mês usando o dia da data do masterFixedExp e o mês/ano do loop
+                // Constrói a data para este mês (do loop de propagação)
+                // usando o dia da masterFixedExp.date (que é o dia original do usuário)
+                // e o ano/mês do mês que estamos processando no loop.
                 const [loopYear, loopMonth] = monthKey.split('-').map(Number);
-                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate(); // Pega o dia da data salva na master definition
+                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate();
 
                 const lastDayOfLoopMonth = new Date(loopYear, loopMonth, 0).getDate();
                 const effectiveDayForLoopMonth = Math.min(dayFromMaster, lastDayOfLoopMonth);
@@ -1539,7 +1531,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDayForLoopMonth);
                 const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
 
+                console.log(`  - Propagating fixed expense ID ${masterFixedExp.id} to ${monthKey}. Calculated date: ${formattedDateForLoopMonth}`);
 
+                const existingIndex = monthData.fixedExpenses.findIndex(exp => exp.id === masterFixedExp.id);
                 if (existingIndex !== -1) {
                     // Se o gasto fixo já existe neste mês, atualiza-o com os dados mestres
                     // e garante que a data seja a correta para este mês de loop
@@ -1547,18 +1541,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...masterFixedExp,
                         date: formattedDateForLoopMonth // Define a data para o mês atual do loop
                     });
+                    console.log(`    -> Updated existing item in ${monthKey}.`);
                 } else {
                     // Se não existe (novo gasto fixo propagado), adiciona
                     updatedFixedExpensesForMonth.push({
                         ...masterFixedExp,
                         date: formattedDateForLoopMonth // Define a data para o mês atual do loop
                     });
+                    console.log(`    -> Added new item to ${monthKey}.`);
                 }
             });
             
             // Substitui a lista de gastos fixos do mês pela lista atualizada e propagada
             monthData.fixedExpenses = updatedFixedExpensesForMonth;
         }
+        console.log("--- DEBUG MIGRATE FIXED EXPENSES END ---");
     };
 
     const migrateInstallments = () => {
@@ -1570,7 +1567,7 @@ document.addEventListener('DOMContentLoaded', () => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
                 // Usamos inst.originalDate como a base para 'seriesStartDate' aqui
-                if (!existingMaster || new Date(inst.originalDate) < new Date(existingMaster.originalDate)) {
+                if (!existingMaster || new Date(inst.originalDate + 'T12:00:00') < new Date(existingMaster.originalDate + 'T12:00:00')) {
                     masterInstallmentDefinitions.set(inst.id, {
                         id: inst.id,
                         name: inst.name,
@@ -1717,11 +1714,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 showConfirmModal('Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**', (response) => { // response pode ser true/false
-                    if (response === true) { // Se for 'Sim' do genericConfirmModal
+                    if (response === 'local') { // Se for 'Sim' do genericConfirmModal
                         allMonthsData = importedData;
                         currentMonthKey = Object.keys(allMonthsData).sort()[0];
                         alert('Dados substituídos com sucesso!');
-                    } else if (response === false) { // Se for 'Não' do genericConfirmModal
+                    } else if (response === 'global') { // Se for 'Não' do genericConfirmModal
                         let newMonthsAdded = 0;
                         let monthsUpdated = 0;
 
@@ -1770,3 +1767,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeApp();
 });
+```
+
