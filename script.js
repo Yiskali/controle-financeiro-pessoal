@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
+                        <td>${item.date}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
