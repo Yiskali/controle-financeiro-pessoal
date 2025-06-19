@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-// Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
+    // Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
     // O callback para customizada retornará 'local' ou 'global'
     // O callback para Sim/Não retornará true ou false
     let currentCustomConfirmCallback = null; // Para armazenar o callback da confirmação customizada
@@ -574,26 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showConfirmModal = (message, callback, option1Text = 'Sim', option2Text = 'Não') => {
         // Define o callback para o handler principal
         currentCustomConfirmCallback = callback;
-
-        // ---- MOVENDO AS DECLARAÇÕES DOS HANDLERS PARA O TOPO DESTA FUNÇÃO ----
-        const handleCustomConfirmButtonClick = (e) => {
-            const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global'; // 'local' para opção 1, 'global' para opção 2
-            if (currentCustomConfirmCallback) {
-                currentCustomConfirmCallback(choice);
-            }
-            customConfirmModal.style.display = 'none';
-            currentCustomConfirmCallback = null; // Limpa o callback após uso
-        };
-
-        const handleGenericConfirmButtonClick = (e) => {
-            const choice = e.target.id === 'confirmYes' ? true : false;
-            if (currentCustomConfirmCallback) {
-                currentCustomConfirmCallback(choice);
-            }
-            confirmModal.style.display = 'none';
-            currentCustomConfirmCallback = null; // Limpa o callback após uso
-        };
-        // ---------------------------------------------------------------------
 
         // Verifica se é uma confirmação com opções customizadas (usando labels de botões diferentes de Sim/Não)
         if (option1Text !== 'Sim' || option2Text !== 'Não') {
@@ -623,12 +603,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Remove listeners antigos para evitar duplicação
             confirmYesBtn.removeEventListener('click', handleGenericConfirmButtonClick);
-            confirmNoBtn.removeEventListener('click', handleGenericConfirmButtonClick); // CORRIGIDO: Era handleGenericConfirmClick
+            confirmNoBtn.removeEventListener('click', handleGenericConfirmButtonClick);
 
             confirmYesBtn.addEventListener('click', handleGenericConfirmButtonClick);
-            confirmNoBtn.addEventListener('click', handleGenericConfirmButtonClick); // CORRIGIDO: Era handleGenericConfirmClick
+            confirmNoBtn.addEventListener('click', handleGenericConfirmButtonClick);
         }
     };
+
     // Handler genérico para os botões do modal customizado (fora de showConfirmModal)
     const handleCustomConfirmButtonClick = (e) => {
         const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global'; // 'local' para opção 1, 'global' para opção 2
@@ -1289,17 +1270,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentDate: formattedSeriesStartDate, // A primeira parcela deste mês
                 currentInstallment: 1, // Sempre a primeira parcela da série ao adicionar
                 totalInstallments: totalInstallments,
-                paymentMethodId: paymentMethodId, // Corrigido de paymentDate para paymentMethodId
+                paymentMethodId: paymentMethodId,
                 categoryId: categoryId,
                 valuePerInstallment: valuePerInstallment,
                 status: 'Ativa'
             };
             currentMonthData.installments.push(newInstallment);
+            saveData();
+            renderCurrentMonthData();
+            // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
+            resetForm('installmentModal');
         }
-        saveData();
-        renderCurrentMonthData();
-        // NÃO FECHA O MODAL: apenas o reseta para uma nova entrada
-        resetForm('installmentModal');
     });
 
     categoryForm.addEventListener('submit', (e) => {
@@ -1513,32 +1494,37 @@ document.addEventListener('DOMContentLoaded', () => {
             return monthA - monthB;
         });
 
+        // Este loop agora é executado para cada mês no 'allMonthsData' para garantir a atualização
         const fixedExpensesToPropagate = new Map(); // Map<id, {name, paymentMethodId, categoryId, value, date (original date user entered for master definition)}>
 
         // Coleta as últimas definições para cada gasto fixo
         for (let i = 0; i < sortedMonths.length; i++) {
             const monthKey = sortedMonths[i];
-            // Importante: Para a definição mestre, pegamos a 'date' que foi salva no item, que é a data do mês selecionado.
-            // Para casos de 'Todos os meses', essa 'date' já reflete o dia original e o mês da edição.
             allMonthsData[monthKey].fixedExpenses.forEach(fixedExp => {
+                // Guarda a versão mais recente de cada gasto fixo, incluindo a data que foi salva no item
+                // A data aqui deve ser a 'base' que contém o dia original do usuário
                 fixedExpensesToPropagate.set(fixedExp.id, {
                     id: fixedExp.id,
                     name: fixedExp.name,
                     paymentMethodId: fixedExp.paymentMethodId,
                     categoryId: fixedExp.categoryId,
                     value: fixedExp.value,
-                    date: fixedExp.date // A data salva para o item (mês do menu + dia original)
+                    date: fixedExp.date // A data que o usuário inseriu/editou no formulário (ex: 2025-01-01)
                 });
             });
         }
         console.log("Master Fixed Expenses collected:", Array.from(fixedExpensesToPropagate.values()));
+
+        // LIMPAR TUDO antes de propagar novamente para evitar duplicatas e inconsistências
+        Object.keys(allMonthsData).forEach(monthKey => {
+            allMonthsData[monthKey].fixedExpenses = [];
+        });
 
 
         // Propaga (ou atualiza) os gastos fixos para todos os meses
         for (let i = 0; i < sortedMonths.length; i++) {
             const monthKey = sortedMonths[i];
             let monthData = allMonthsData[monthKey];
-            let updatedFixedExpensesForMonth = [];
             
             console.log(`Processing month: ${monthKey}`);
 
@@ -1547,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // usando o dia da masterFixedExp.date (que é o dia original do usuário)
                 // e o ano/mês do mês que estamos processando no loop.
                 const [loopYear, loopMonth] = monthKey.split('-').map(Number);
-                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate();
+                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate(); // Pega o dia da data salva na master definition
 
                 const lastDayOfLoopMonth = new Date(loopYear, loopMonth, 0).getDate();
                 const effectiveDayForLoopMonth = Math.min(dayFromMaster, lastDayOfLoopMonth);
@@ -1557,27 +1543,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 console.log(`  - Propagating fixed expense ID ${masterFixedExp.id} to ${monthKey}. Calculated date: ${formattedDateForLoopMonth}`);
 
-                const existingIndex = monthData.fixedExpenses.findIndex(exp => exp.id === masterFixedExp.id);
-                if (existingIndex !== -1) {
-                    // Se o gasto fixo já existe neste mês, atualiza-o com os dados mestres
-                    // e garante que a data seja a correta para este mês de loop
-                    updatedFixedExpensesForMonth.push({
-                        ...masterFixedExp,
-                        date: formattedDateForLoopMonth // Define a data para o mês atual do loop
-                    });
-                    console.log(`    -> Updated existing item in ${monthKey}.`);
-                } else {
-                    // Se não existe (novo gasto fixo propagado), adiciona
-                    updatedFixedExpensesForMonth.push({
-                        ...masterFixedExp,
-                        date: formattedDateForLoopMonth // Define a data para o mês atual do loop
-                    });
-                    console.log(`    -> Added new item to ${monthKey}.`);
-                }
+                // Adiciona o gasto fixo (com sua data ajustada para o mês do loop)
+                // Não precisa mais verificar se existe, pois limpamos tudo antes e estamos reconstruindo
+                monthData.fixedExpenses.push({
+                    ...masterFixedExp,
+                    date: formattedDateForLoopMonth // Define a data para o mês atual do loop
+                });
+                console.log(`    -> Added/Updated item in ${monthKey}.`);
             });
-            
-            // Substitui a lista de gastos fixos do mês pela lista atualizada e propagada
-            monthData.fixedExpenses = updatedFixedExpensesForMonth;
         }
         console.log("--- DEBUG MIGRATE FIXED EXPENSES END ---");
     };
