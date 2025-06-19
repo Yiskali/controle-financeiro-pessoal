@@ -566,22 +566,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-   // Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
+    // Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
     // O callback para customizada retornará 'local' ou 'global'
     // O callback para Sim/Não retornará true ou false
-    const showConfirmModal = (message, callback, option1Text = 'Sim', option2Text = 'Não') => {
-        // Define os handlers AQUI DENTRO, mas antes de serem usados
-        const customConfirmHandler = (e) => {
-            const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global';
-            callback(choice); // Chama o callback com a opção escolhida ('local' ou 'global')
-            customConfirmModal.style.display = 'none'; // Fecha o modal customizado
-        };
+    let currentCustomConfirmCallback = null; // Para armazenar o callback da confirmação customizada
 
-        const genericConfirmHandler = (e) => {
-            const choice = e.target.id === 'confirmYes' ? true : false;
-            callback(choice); // Chama o callback com a opção escolhida (true ou false)
-            confirmModal.style.display = 'none'; // Fecha o modal Sim/Não
-        };
+    const showConfirmModal = (message, callback, option1Text = 'Sim', option2Text = 'Não') => {
+        // Define o callback para o handler principal
+        currentCustomConfirmCallback = callback;
 
         // Verifica se é uma confirmação com opções customizadas (usando labels de botões diferentes de Sim/Não)
         if (option1Text !== 'Sim' || option2Text !== 'Não') {
@@ -591,14 +583,15 @@ document.addEventListener('DOMContentLoaded', () => {
             customConfirmModal.style.display = 'flex';
             customConfirmMessage.textContent = message; // Exibe a mensagem completa
             customConfirmOption1Btn.textContent = option1Text;
-            customConfirmOption2Btn.textContent = option2Btn;
+            customConfirmOption2Btn.textContent = option2Text;
 
-            // Limpa todos os listeners anteriores para evitar múltiplos disparos
-            customConfirmOption1Btn.removeEventListener('click', customConfirmHandler);
-            customConfirmOption2Btn.removeEventListener('click', customConfirmHandler);
+            // Remove listeners antigos para evitar duplicação em cliques repetidos no mesmo modal
+            customConfirmOption1Btn.removeEventListener('click', handleCustomConfirmButtonClick);
+            customConfirmOption2Btn.removeEventListener('click', handleCustomConfirmButtonClick);
 
-            customConfirmOption1Btn.addEventListener('click', customConfirmHandler);
-            customConfirmOption2Btn.addEventListener('click', customConfirmHandler);
+            // Adiciona novos listeners
+            customConfirmOption1Btn.addEventListener('click', handleCustomConfirmButtonClick);
+            customConfirmOption2Btn.addEventListener('click', handleCustomConfirmButtonClick);
 
         } else {
             // Para confirmações Sim/Não genéricas (o modal original 'confirmModal')
@@ -608,13 +601,33 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmModal.style.display = 'flex';
             confirmMessage.textContent = message;
 
-            // Limpa todos os listeners anteriores para evitar múltiplos disparos
-            confirmYesBtn.removeEventListener('click', genericConfirmHandler);
-            confirmNoBtn.removeEventListener('click', genericConfirmHandler);
+            // Remove listeners antigos para evitar duplicação
+            confirmYesBtn.removeEventListener('click', handleGenericConfirmButtonClick);
+            confirmNoBtn.removeEventListener('click', handleGenericConfirmButtonClick);
 
-            confirmYesBtn.addEventListener('click', genericConfirmHandler);
-            confirmNoBtn.addEventListener('click', genericConfirmHandler);
+            confirmYesBtn.addEventListener('click', handleGenericConfirmButtonClick);
+            confirmNoBtn.addEventListener('click', handleGenericConfirmButtonClick);
         }
+    };
+
+    // Handler genérico para os botões do modal customizado (fora de showConfirmModal)
+    const handleCustomConfirmButtonClick = (e) => {
+        const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global'; // 'local' para opção 1, 'global' para opção 2
+        if (currentCustomConfirmCallback) {
+            currentCustomConfirmCallback(choice);
+        }
+        customConfirmModal.style.display = 'none';
+        currentCustomConfirmCallback = null; // Limpa o callback após uso
+    };
+
+    // Handler genérico para os botões do modal Sim/Não (fora de showConfirmModal)
+    const handleGenericConfirmButtonClick = (e) => {
+        const choice = e.target.id === 'confirmYes' ? true : false;
+        if (currentCustomConfirmCallback) {
+            currentCustomConfirmCallback(choice);
+        }
+        confirmModal.style.display = 'none';
+        currentCustomConfirmCallback = null; // Limpa o callback após uso
     };
 
 
@@ -1053,29 +1066,33 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('fixedExpenseId').value;
         const name = document.getElementById('fixedExpenseName').value;
-        const date = document.getElementById('fixedExpenseDate').value; // Data que o usuário digitou
+        const date = document.getElementById('fixedExpenseDate').value; // Data que o usuário digitou (ex: '2025-01-01')
         const paymentMethodId = document.getElementById('fixedExpensePaymentMethod').value;
         const categoryId = document.getElementById('fixedExpenseCategory').value;
         const value = parseFloat(document.getElementById('fixedExpenseValue').value);
 
         const currentMonthData = getCurrentMonthData();
         const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
-        const dayOfExpense = new Date(date).getDate(); // Pega o dia da data inserida
 
-        // Constrói a data do gasto fixo para o mês selecionado no menu, usando o dia da data inserida
-        const finalDateObj = new Date(currentYearSelected, currentMonthSelected - 1, dayOfExpense);
-        // Ajusta o dia se o dia original for maior que o número de dias no mês (ex: 31 de Jan para Fev)
-        if (finalDateObj.getMonth() !== (currentMonthSelected - 1)) {
-            finalDateObj.setDate(0); // Ajusta para o último dia do mês, se o dia original exceder
-        }
+        // Extrai APENAS O DIA da data digitada pelo usuário
+        const dayOfExpense = new Date(date + 'T12:00:00').getDate(); // Adiciona hora para evitar problemas de fuso horário
+        
+        // Constrói a data final a ser salva, garantindo o mês do menu e o dia digitado.
+        // O Math.min garante que o dia não exceda o último dia do mês (ex: 31 de fevereiro)
+        const lastDayOfSelectedMonth = new Date(currentYearSelected, currentMonthSelected, 0).getDate();
+        const effectiveDay = Math.min(dayOfExpense, lastDayOfSelectedMonth);
+
+        const finalDateObj = new Date(currentYearSelected, currentMonthSelected - 1, effectiveDay);
         const finalDateToSave = finalDateObj.toISOString().split('T')[0];
 
         // Logs de depuração para gasto fixo
         console.log("--- DEBUG GASTO FIXO ---");
-        console.log("Data input pelo usuário:", date); // Ex: 2025-01-12
+        console.log("Data input pelo usuário (original):", date); // Ex: 2025-01-12
         console.log("Mês selecionado no menu (currentMonthKey):", currentMonthKey); // Ex: 2025-06
         console.log("Dia da despesa (extraído da data input):", dayOfExpense); // Ex: 12
-        console.log("Data final a ser salva (mês do menu + dia da despesa):", finalDateToSave); // Ex: 2025-06-12
+        console.log("Último dia do mês selecionado:", lastDayOfSelectedMonth); // Ex: 30
+        console.log("Dia efetivo a ser salvo (min(dia_input, ultimo_dia_mes)):", effectiveDay); // Ex: 12
+        console.log("Data final a ser salva (mês do menu + dia efetivo):", finalDateToSave); // Ex: 2025-06-12
 
 
         if (id) {
@@ -1113,13 +1130,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         const index = monthData.fixedExpenses.findIndex(exp => exp.id === id);
 
                         if (index !== -1) {
-                            // Ajusta a data para o ano e mês do mês atual do loop, mantendo o dia original
+                            // Ajusta a data para o ano e mês do mês atual do loop, mantendo o dia efetivo
                             const [loopYear, loopMonth] = monthKey.split('-').map(Number);
-                            const newDateForLoopMonth = new Date(loopYear, loopMonth - 1, dayOfExpense); // Usa o DIA original
-                            if (newDateForLoopMonth.getMonth() !== (loopMonth - 1)) {
-                                newDateForLoopMonth.setDate(0);
+                            const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDay); // Usa o DIA efetivo
+                            if (newDateForLoopMonthObj.getMonth() !== (loopMonth - 1)) {
+                                newDateForLoopMonthObj.setDate(0); // Ajusta para último dia se for o caso
                             }
-                            const formattedDateForLoopMonth = newDateForLoopMonth.toISOString().split('T')[0];
+                            const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
 
                             monthData.fixedExpenses[index] = { 
                                 ...monthData.fixedExpenses[index], 
@@ -1188,16 +1205,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number); // Ano e mês do mês ATUALMENTE SELECIONADO NO MENU
 
         // Extrai APENAS O DIA da data de compra digitada pelo usuário
-        const purchaseDay = new Date(purchaseDateFromInput).getDate();
+        const purchaseDay = new Date(purchaseDateFromInput + 'T12:00:00').getDate(); // Adiciona hora para evitar problemas de fuso horário
         
         // Constrói a seriesStartDate (que será a "originalDate" para a série de parcelas)
         // usando o ANO e MÊS DO MÊS ATUALMENTE SELECIONADO no menu, e o DIA DA COMPRA.
-        const seriesStartDate = new Date(currentYearSelected, currentMonthSelected - 1, purchaseDay);
-        
-        // Ajusta o dia se o purchaseDay for maior que o número de dias no mês (ex: 31 de Jan para Fev)
-        if (seriesStartDate.getMonth() !== (currentMonthSelected - 1)) {
-            seriesStartDate.setDate(0); // Ajusta para o último dia do mês, se o dia original exceder
-        }
+        // O Math.min garante que o dia não exceda o último dia do mês (ex: 31 de fevereiro)
+        const lastDayOfSelectedMonth = new Date(currentYearSelected, currentMonthSelected, 0).getDate();
+        const effectiveDayForSeries = Math.min(purchaseDay, lastDayOfSelectedMonth);
+
+        const seriesStartDate = new Date(currentYearSelected, currentMonthSelected - 1, effectiveDayForSeries);
         const formattedSeriesStartDate = seriesStartDate.toISOString().split('T')[0];
 
         if (id) {
@@ -1486,20 +1502,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Este loop agora é executado para cada mês no 'allMonthsData' para garantir a atualização
-        const fixedExpensesToPropagate = new Map(); // Map<id, {name, paymentMethodId, categoryId, value}>
+        const fixedExpensesToPropagate = new Map(); // Map<id, {name, paymentMethodId, categoryId, value, date (original date user entered)}>
 
         // Coleta as últimas definições para cada gasto fixo
         for (let i = 0; i < sortedMonths.length; i++) {
             const monthKey = sortedMonths[i];
             allMonthsData[monthKey].fixedExpenses.forEach(fixedExp => {
-                // Guarda a versão mais recente de cada gasto fixo
+                // Guarda a versão mais recente de cada gasto fixo, incluindo a data que foi salva no item
                 fixedExpensesToPropagate.set(fixedExp.id, {
                     id: fixedExp.id,
                     name: fixedExp.name,
                     paymentMethodId: fixedExp.paymentMethodId,
                     categoryId: fixedExp.categoryId,
                     value: fixedExp.value,
-                    date: fixedExp.date // Adiciona a data para a definição mestre
+                    date: fixedExp.date // Adiciona a data como ela está no item
                 });
             });
         }
@@ -1509,35 +1525,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const monthKey = sortedMonths[i];
             let monthData = allMonthsData[monthKey];
             let updatedFixedExpensesForMonth = [];
-            const existingFixedExpIdsInMonth = new Set(monthData.fixedExpenses.map(exp => exp.id));
-
+            
             fixedExpensesToPropagate.forEach(masterFixedExp => {
                 const existingIndex = monthData.fixedExpenses.findIndex(exp => exp.id === masterFixedExp.id);
+                
+                // Constrói a data para este mês usando o dia da data do masterFixedExp e o mês/ano do loop
+                const [loopYear, loopMonth] = monthKey.split('-').map(Number);
+                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate(); // Pega o dia da data salva na master definition
+
+                const lastDayOfLoopMonth = new Date(loopYear, loopMonth, 0).getDate();
+                const effectiveDayForLoopMonth = Math.min(dayFromMaster, lastDayOfLoopMonth);
+
+                const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDayForLoopMonth);
+                const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
+
+
                 if (existingIndex !== -1) {
-                    // Atualiza o gasto fixo existente no mês com os dados mais recentes
-                    // Mas a data deve ser a que está naquele mês no localStorage, não a da masterFixedExp
+                    // Se o gasto fixo já existe neste mês, atualiza-o com os dados mestres
+                    // e garante que a data seja a correta para este mês de loop
                     updatedFixedExpensesForMonth.push({
                         ...masterFixedExp,
-                        date: monthData.fixedExpenses[existingIndex].date // Mantém a data LOCALIZADA
+                        date: formattedDateForLoopMonth // Define a data para o mês atual do loop
                     });
                 } else {
-                    // Se não existe, adiciona como um novo gasto fixo naquele mês
-                    // Com a data ajustada para o ano/mês do mês atual do loop e um dia padrão (ex: 1º ou dia original se existir)
-                    const [year, month] = monthKey.split('-').map(Number);
-                    const dayFromMaster = new Date(masterFixedExp.date).getDate(); // Pega o dia da data salva na master definition
-                    const newDate = new Date(year, month - 1, dayFromMaster);
-                    if (newDate.getMonth() !== (month - 1)) { newDate.setDate(0); } // Ajusta para último dia se for o caso
-                    const formattedDate = newDate.toISOString().split('T')[0];
-
+                    // Se não existe (novo gasto fixo propagado), adiciona
                     updatedFixedExpensesForMonth.push({
                         ...masterFixedExp,
-                        date: formattedDate // Define a data para o mês atual
+                        date: formattedDateForLoopMonth // Define a data para o mês atual do loop
                     });
                 }
             });
             
-            // Filtra e mantém apenas os gastos fixos que foram explicitamente adicionados ou atualizados
-            // e remove quaisquer que não fazem parte do master list (se algo foi excluído globalmente)
+            // Substitui a lista de gastos fixos do mês pela lista atualizada e propagada
             monthData.fixedExpenses = updatedFixedExpensesForMonth;
         }
     };
@@ -1580,8 +1599,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         masterInstallmentDefinitions.forEach(masterInst => {
-            const seriesStartDateObj = new Date(masterInst.originalDate); // Usa o originalDate (que é o seriesStartDate)
-
+            const seriesStartDateObj = new Date(masterInst.originalDate + 'T12:00:00'); // Usa o originalDate (que é o seriesStartDate) com hora
+            
             sortedMonthsKeys.forEach(monthKey => {
                 const monthDate = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]) - 1, 1);
 
