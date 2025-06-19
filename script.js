@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
+// Função de confirmação genérica (agora com suporte a Sim/Não E opções customizadas)
     // O callback para customizada retornará 'local' ou 'global'
     // O callback para Sim/Não retornará true ou false
     let currentCustomConfirmCallback = null; // Para armazenar o callback da confirmação customizada
@@ -574,6 +574,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const showConfirmModal = (message, callback, option1Text = 'Sim', option2Text = 'Não') => {
         // Define o callback para o handler principal
         currentCustomConfirmCallback = callback;
+
+        // ---- MOVENDO AS DECLARAÇÕES DOS HANDLERS PARA O TOPO DESTA FUNÇÃO ----
+        const handleCustomConfirmButtonClick = (e) => {
+            const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global'; // 'local' para opção 1, 'global' para opção 2
+            if (currentCustomConfirmCallback) {
+                currentCustomConfirmCallback(choice);
+            }
+            customConfirmModal.style.display = 'none';
+            currentCustomConfirmCallback = null; // Limpa o callback após uso
+        };
+
+        const handleGenericConfirmButtonClick = (e) => {
+            const choice = e.target.id === 'confirmYes' ? true : false;
+            if (currentCustomConfirmCallback) {
+                currentCustomConfirmCallback(choice);
+            }
+            confirmModal.style.display = 'none';
+            currentCustomConfirmCallback = null; // Limpa o callback após uso
+        };
+        // ---------------------------------------------------------------------
 
         // Verifica se é uma confirmação com opções customizadas (usando labels de botões diferentes de Sim/Não)
         if (option1Text !== 'Sim' || option2Text !== 'Não') {
@@ -603,13 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Remove listeners antigos para evitar duplicação
             confirmYesBtn.removeEventListener('click', handleGenericConfirmButtonClick);
-            confirmNoBtn.removeEventListener('click', handleGenericConfirmClick);
+            confirmNoBtn.removeEventListener('click', handleGenericConfirmButtonClick); // CORRIGIDO: Era handleGenericConfirmClick
 
             confirmYesBtn.addEventListener('click', handleGenericConfirmButtonClick);
-            confirmNoBtn.addEventListener('click', handleGenericConfirmClick);
+            confirmNoBtn.addEventListener('click', handleGenericConfirmButtonClick); // CORRIGIDO: Era handleGenericConfirmClick
         }
     };
-
     // Handler genérico para os botões do modal customizado (fora de showConfirmModal)
     const handleCustomConfirmButtonClick = (e) => {
         const choice = e.target.id === 'customConfirmOption1' ? 'local' : 'global'; // 'local' para opção 1, 'global' para opção 2
