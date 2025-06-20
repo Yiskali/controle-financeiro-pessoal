@@ -1091,11 +1091,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Funções de Manipulação de Dados (Adicionar, Editar, Excluir) ---
 
+// --- Fixed Expense Form Handler ---
 fixedExpenseForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('fixedExpenseId').value;
     const name = document.getElementById('fixedExpenseName').value;
-    const dateInput = document.getElementById('fixedExpenseDate').value; // Data que o usuário digitou (ex: '2025-01-01')
+    const dateInput = document.getElementById('fixedExpenseDate').value;
     const paymentMethodId = document.getElementById('fixedExpensePaymentMethod').value;
     const categoryId = document.getElementById('fixedExpenseCategory').value;
     const value = parseFloat(document.getElementById('fixedExpenseValue').value);
@@ -1103,7 +1104,6 @@ fixedExpenseForm.addEventListener('submit', (e) => {
     const currentMonthData = getCurrentMonthData();
     const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number);
 
-    // Extrai APENAS O DIA da data digitada pelo usuário
     const dayOfExpense = new Date(dateInput + 'T12:00:00').getDate();
     const lastDayOfSelectedMonth = new Date(currentYearSelected, currentMonthSelected, 0).getDate();
     const effectiveDay = Math.min(dayOfExpense, lastDayOfSelectedMonth);
@@ -1112,56 +1112,41 @@ fixedExpenseForm.addEventListener('submit', (e) => {
     const finalDateToSave = finalDateObj.toISOString().split('T')[0];
 
     if (id) {
-        // Edição de gasto fixo
         showConfirmModal('Alterar dado em :',
             (response) => {
-                if (response === 'local') { // No mês selecionado
-                    // 1. Remove from master (so this month becomes independent)
-                    masterFixedExpensesDefinitions.delete(id);
-
-                    // 2. Make a local version in current month
-                    const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
+                if (response === 'local') {
+                    // 1. Add/Replace a local override for this month only.
+                    const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id && exp.isLocal === true);
+                    const overrideExpense = {
+                        id: id,
+                        name,
+                        date: finalDateToSave,
+                        paymentMethodId,
+                        categoryId,
+                        value,
+                        isLocal: true
+                    };
                     if (index !== -1) {
-                        currentMonthData.fixedExpenses[index] = {
-                            ...currentMonthData.fixedExpenses[index],
-                            name,
-                            date: finalDateToSave,
-                            paymentMethodId,
-                            categoryId,
-                            value,
-                            isLocal: true // mark as local override
-                        };
+                        currentMonthData.fixedExpenses[index] = overrideExpense;
                     } else {
-                        // If not found, add as local
-                        const newExpenseForCurrentMonth = {
-                            id: id,
-                            name: name,
-                            date: finalDateToSave,
-                            paymentMethodId: paymentMethodId,
-                            categoryId: categoryId,
-                            value: value,
-                            isLocal: true
-                        };
-                        currentMonthData.fixedExpenses.push(newExpenseForCurrentMonth);
+                        // Remove any previous instance of this ID (from previous migrations) for this month
+                        currentMonthData.fixedExpenses = currentMonthData.fixedExpenses.filter(exp => !(exp.id === id && !exp.isLocal));
+                        currentMonthData.fixedExpenses.push(overrideExpense);
                     }
-
                     saveData();
                     renderCurrentMonthData();
                     closeModal(document.getElementById('fixedExpenseModal'));
                     alert('Gasto fixo atualizado apenas no mês selecionado. Edição local desvinculada dos meses recorrentes.');
-
-                } else if (response === 'global') { // Todos os meses (subsequentes)
+                } else if (response === 'global') {
                     // Update master only
                     masterFixedExpensesDefinitions.set(id, {
                         id: id,
                         name: name,
-                        date: dateInput, // MANTÉM A DATA ORIGINAL
+                        date: dateInput,
                         paymentMethodId: paymentMethodId,
                         categoryId: categoryId,
                         value: value
-                        // do NOT set isLocal in master
                     });
-
                     saveData();
                     renderCurrentMonthData();
                     closeModal(document.getElementById('fixedExpenseModal'));
@@ -1180,8 +1165,7 @@ fixedExpenseForm.addEventListener('submit', (e) => {
             value
         };
         currentMonthData.fixedExpenses.push(newExpense);
-
-        // Adiciona também à masterFixedExpensesDefinitions para propagação global
+        // Add to master too
         masterFixedExpensesDefinitions.set(newExpense.id, {
             id: newExpense.id,
             name: newExpense.name,
@@ -1190,15 +1174,13 @@ fixedExpenseForm.addEventListener('submit', (e) => {
             categoryId: newExpense.categoryId,
             value: newExpense.value
         });
-
         saveData();
         renderCurrentMonthData();
         closeModal(document.getElementById('fixedExpenseModal'));
         alert('Gasto fixo adicionado com sucesso!');
     }
 });
-
-
+    
     monthlyExpenseForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const id = document.getElementById('monthlyExpenseId').value;
@@ -1531,7 +1513,6 @@ fixedExpenseForm.addEventListener('submit', (e) => {
     // --- Funções de Migração de Dados ---
 
 const migrateFixedExpenses = () => {
-    console.log("--- DEBUG MIGRATE FIXED EXPENSES START ---");
     const sortedMonths = Object.keys(allMonthsData).sort((a, b) => {
         const [yearA, monthA] = a.split('-').map(Number);
         const [yearB, monthB] = b.split('-').map(Number);
@@ -1539,26 +1520,20 @@ const migrateFixedExpenses = () => {
         return monthA - monthB;
     });
 
-    // 1. Clear all fixedExpenses except local overrides
+    // For each month, keep local overrides and add all master/global fixed expenses that do not have a local override
     Object.keys(allMonthsData).forEach(monthKey => {
         const monthData = allMonthsData[monthKey];
-        // Keep only local overrides (those with isLocal === true)
-        monthData.fixedExpenses = monthData.fixedExpenses.filter(exp => exp.isLocal === true);
-    });
+        // Get all local overrides for this month
+        const localOverrides = monthData.fixedExpenses.filter(exp => exp.isLocal === true);
+        // Remove all non-local (global) fixed expenses
+        monthData.fixedExpenses = localOverrides.slice();
 
-    // 2. Propagate master fixed expenses to all months, but skip months with local overrides for each id
-    sortedMonths.forEach(monthKey => {
-        const monthData = allMonthsData[monthKey];
-
+        // Add all master (global) fixed expenses that do not have a local override
         masterFixedExpensesDefinitions.forEach(masterFixedExp => {
-            // If this month already has a local override for this id, skip
-            const hasLocalOverride = monthData.fixedExpenses.some(exp => exp.id === masterFixedExp.id && exp.isLocal === true);
-            if (hasLocalOverride) {
-                // Do not propagate master here
-                return;
-            }
+            // If there is a local override for this id in this month, skip adding global
+            const hasLocal = localOverrides.some(exp => exp.id === masterFixedExp.id);
+            if (hasLocal) return;
 
-            // Otherwise, add or update the master expense for this month
             const [loopYear, loopMonth] = monthKey.split('-').map(Number);
             const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate();
             const lastDayOfLoopMonth = new Date(loopYear, loopMonth, 0).getDate();
@@ -1566,24 +1541,21 @@ const migrateFixedExpenses = () => {
             const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDayForLoopMonth);
             const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
 
-            // Ensure no duplicate
-            const alreadyExists = monthData.fixedExpenses.some(exp => exp.id === masterFixedExp.id);
-            if (!alreadyExists) {
-                monthData.fixedExpenses.push({
-                    id: masterFixedExp.id,
-                    name: masterFixedExp.name,
-                    date: formattedDateForLoopMonth,
-                    paymentMethodId: masterFixedExp.paymentMethodId,
-                    categoryId: masterFixedExp.categoryId,
-                    value: masterFixedExp.value
-                    // do NOT set isLocal
-                });
-            }
+            monthData.fixedExpenses.push({
+                id: masterFixedExp.id,
+                name: masterFixedExp.name,
+                date: formattedDateForLoopMonth,
+                paymentMethodId: masterFixedExp.paymentMethodId,
+                categoryId: masterFixedExp.categoryId,
+                value: masterFixedExp.value
+                // no isLocal flag!
+            });
         });
 
         // Optional: sort by date
         monthData.fixedExpenses.sort((a, b) => new Date(a.date + 'T12:00:00') - new Date(b.date + 'T12:00:00'));
     });
+};
 
     console.log("--- DEBUG MIGRATE FIXED EXPENSES END ---");
 };
