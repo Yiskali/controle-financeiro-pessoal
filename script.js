@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMonthKey; // FormatogetFullYear()-MM
     let allMonthsData = {}; // Objeto para armazenar dados de todos os meses
 
+    // NOVO: A DEFINIÇÃO MESTRE GLOBAL PARA GASTOS FIXOS
+    // Isso garante que haja uma única fonte de verdade para todos os gastos fixos recorrentes
+    let masterFixedExpensesDefinitions = new Map(); // Map<id, {name, paymentMethodId, categoryId, value, date (original user input date)}>
+
     const monthSelect = document.getElementById('monthSelect');
     const prevMonthBtn = document.getElementById('prevMonth');
     const nextMonthBtn = document.getElementById('nextMonth');
@@ -775,7 +779,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'fixedExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <td>${paymentMethodName}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
+                        <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
                         <td>
@@ -787,7 +792,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <td>${paymentMethodName}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
+                        <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
                         <td>
@@ -799,7 +805,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.purchaseDate)}</td> <td>${item.currentInstallment}/${item.totalInstallments}</td>
+                        <td>${formatDisplayDate(item.purchaseDate)}</td> <!-- Exibir a purchaseDate -->
+                        <td>${item.currentInstallment}/${item.totalInstallments}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.valuePerInstallment)}</td>
@@ -1115,6 +1122,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             categoryId, 
                             value 
                         };
+                    } else {
+                        // Se não encontrou no mês atual, pode ser um gasto fixo recém-adicionado
+                        // que ainda não foi propagado globalmente na primeira run de migrateFixedExpenses.
+                        // Adicionar explicitamente para o mês atual para que seja pego na próxima migração.
+                        const newExpenseForCurrentMonth = { 
+                            id: id, // Mantém o ID existente
+                            name: name,
+                            date: finalDateToSave, // Data do mês atual
+                            paymentMethodId: paymentMethodId,
+                            categoryId: categoryId,
+                            value: value
+                        };
+                        currentMonthData.fixedExpenses.push(newExpenseForCurrentMonth);
                     }
                     saveData();
                     renderCurrentMonthData();
@@ -1124,19 +1144,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Atualiza a definição mestre do gasto fixo
                     // A data original do gasto fixo (masterFixedExp.date) será a data inserida pelo usuário
                     // para que a propagação use o dia original, mas o mês do loop
+                    // Remove o item de todos os meses, e a migrateFixedExpenses() irá adicioná-lo de volta com os dados atualizados.
                     Object.keys(allMonthsData).forEach(monthKey => {
-                        let monthData = allMonthsData[monthKey];
-                        const index = monthData.fixedExpenses.findIndex(exp => exp.id === id);
-                        if (index !== -1) {
-                             monthData.fixedExpenses[index] = {
-                                ...monthData.fixedExpenses[index],
-                                name: name,
-                                date: dateInput, // MANTÉM A DATA ORIGINALMENTE DIGITADA PELO USUÁRIO para a definição mestre
-                                paymentMethodId, 
-                                categoryId, 
-                                value 
-                            };
-                        }
+                        allMonthsData[monthKey].fixedExpenses = allMonthsData[monthKey].fixedExpenses.filter(exp => exp.id !== id);
+                    });
+
+                    // Adiciona o item atualizado à masterFixedExpensesDefinitions
+                    masterFixedExpensesDefinitions.set(id, {
+                        id: id,
+                        name: name,
+                        date: dateInput, // MANTÉM A DATA ORIGINALMENTE DIGITADA PELO USUÁRIO para a definição mestre
+                        paymentMethodId: paymentMethodId, 
+                        categoryId: categoryId, 
+                        value: value 
                     });
 
                     saveData();
@@ -1148,8 +1168,18 @@ document.addEventListener('DOMContentLoaded', () => {
             'No mês selecionado', 'Todos os meses'); // Labels para os botões do modal customizado
         } else {
             // Adicionando um NOVO gasto fixo (comportamento existente)
-            const newExpense = { id: generateId(), name, date: finalDateToSave, paymentMethodId, categoryId, value };
+            const newExpense = { id: generateId(), name, date: dateInput, paymentMethodId, categoryId, value }; // Salva a data ORIGINAL de input
             currentMonthData.fixedExpenses.push(newExpense);
+            // Adiciona também à masterFixedExpensesDefinitions para propagação
+            masterFixedExpensesDefinitions.set(newExpense.id, {
+                id: newExpense.id,
+                name: newExpense.name,
+                date: newExpense.date, // Data original do input
+                paymentMethodId: newExpense.paymentMethodId,
+                categoryId: newExpense.categoryId,
+                value: newExpense.value
+            });
+
             saveData();
             renderCurrentMonthData();
             closeModal(document.getElementById('fixedExpenseModal'));
@@ -1495,6 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Map para armazenar a DEFINIÇÃO MESTRE de cada gasto fixo
         // Esta é a lista global de TODOS os gastos fixos que devem propagar
+        // Key: id do gasto fixo, Value: objeto do gasto fixo
         const masterFixedExpensesDefinitions = new Map(); 
 
         // 1. Coletar todas as DEFINIÇÕES MESTRAS de gastos fixos de TODOS os meses
@@ -1503,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.values(allMonthsData).forEach(monthData => {
             monthData.fixedExpenses.forEach(fixedExp => {
                 const existingMaster = masterFixedExpensesDefinitions.get(fixedExp.id);
-                // Guarda a versão mais recente do gasto fixo
+                // Guarda a versão mais recente do gasto fixo (baseado em qualquer atualização)
                 // A data armazenada aqui é a data ORIGINAL do input do usuário
                 if (!existingMaster || new Date(fixedExp.date + 'T12:00:00') > new Date(existingMaster.date + 'T12:00:00')) {
                     masterFixedExpensesDefinitions.set(fixedExp.id, {
@@ -1522,6 +1553,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Se não há gastos fixos para propagar, não fazemos nada
         if (masterFixedExpensesDefinitions.size === 0) {
             console.log("No fixed expenses to propagate. Exiting migration.");
+            // Limpa todas as fixedExpenses em todos os meses se não houver mestres para evitar fantasmas
+            Object.keys(allMonthsData).forEach(monthKey => {
+                allMonthsData[monthKey].fixedExpenses = [];
+            });
             return; // Sai da função se não há nada para propagar
         }
 
@@ -1542,12 +1577,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Propagating to month: ${monthKey}`);
 
             masterFixedExpensesDefinitions.forEach(masterFixedExp => {
-                // Constrói a data para este gasto fixo no contexto do 'monthKey' atual
+                // Constrói a data para este mês (do loop de propagação)
+                // Usa o ANO/MÊS do 'monthKey' atual do loop e o DIA da 'date' da definição mestre.
                 const [loopYear, loopMonth] = monthKey.split('-').map(Number);
-                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate(); // Pega o dia da data da definição mestre
+                const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate(); // Pega o dia da data salva na master definition
 
+                // Garante que o dia não exceda o último dia do mês para o mês atual do loop
                 const lastDayOfLoopMonth = new Date(loopYear, loopMonth, 0).getDate();
-                const effectiveDayForLoopMonth = Math.min(dayFromMaster, lastDayOfLoopMonth); // Garante que o dia é válido
+                const effectiveDayForLoopMonth = Math.min(dayFromMaster, lastDayOfLoopMonth);
 
                 const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDayForLoopMonth);
                 const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
@@ -1557,7 +1594,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthData.fixedExpenses.push({
                     id: masterFixedExp.id, // Mantém o ID original
                     name: masterFixedExp.name,
-                    date: formattedDateForLoopMonth, // Data ajustada para o mês atual
+                    date: formattedDateForLoopMonth, // Data ajustada para o mês atual do loop
                     paymentMethodId: masterFixedExp.paymentMethodId,
                     categoryId: masterFixedExp.categoryId,
                     value: masterFixedExp.value
