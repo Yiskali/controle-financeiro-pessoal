@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById(modalId).querySelector('form');
         if (form) {
             form.reset();
-            const idInput = form.querySelector('input[type="hidden']');
+            const idInput = form.querySelector('input[type="hidden"]');
             if (idInput) idInput.value = '';
             // Chamar renderCategoryList/renderPaymentMethodList aqui para atualizar a lista no modal
             if (modalId === 'categoryModal') {
