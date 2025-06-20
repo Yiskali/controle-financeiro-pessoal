@@ -1100,59 +1100,51 @@ fixedExpenseForm.addEventListener('submit', (e) => {
 
     const currentMonthData = getCurrentMonthData();
 
-    if (id) {
-        // Edição existente
-        showConfirmModal('Alterar gasto fixo em:', (response) => {
-            if (response) { // "No mês selecionado"
-                // Atualiza apenas no mês atual
-                const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
-                if (index !== -1) {
-                    currentMonthData.fixedExpenses[index] = {
-                        id,
-                        name,
-                        date: finalDate,
-                        paymentMethodId,
-                        categoryId,
-                        value
-                    };
-                } else {
-                    currentMonthData.fixedExpenses.push({
-                        id,
-                        name,
-                        date: finalDate,
-                        paymentMethodId,
-                        categoryId,
-                        value
-                    });
-                }
-                
-                saveData();
-                renderCurrentMonthData();
-                closeModal(document.getElementById('fixedExpenseModal'));
-                alert('Gasto fixo atualizado no mês atual!');
-            } else { // "Todos os meses"
-                // Remove de todos os meses
-                Object.keys(allMonthsData).forEach(monthKey => {
-                    allMonthsData[monthKey].fixedExpenses = allMonthsData[monthKey].fixedExpenses.filter(exp => exp.id !== id);
-                });
-
-                // Atualiza definição mestre
-                masterFixedExpensesDefinitions.set(id, {
+if (id) {
+    // Edição existente
+    showConfirmModal('Alterar gasto fixo em:', (response) => {
+        if (response) { // No mês selecionado
+            // Atualiza apenas no mês atual
+            const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
+            if (index !== -1) {
+                currentMonthData.fixedExpenses[index] = {
                     id,
                     name,
-                    date: dateInput, // Mantém a data original para propagação
+                    date: finalDate,
                     paymentMethodId,
                     categoryId,
                     value
-                });
-
-                saveData();
-                renderCurrentMonthData();
-                closeModal(document.getElementById('fixedExpenseModal'));
-                alert('Gasto fixo atualizado em todos os meses!');
+                };
             }
-        }, 'No mês selecionado', 'Todos os meses');
-    } else {
+            saveData();
+            renderCurrentMonthData();
+            closeModal(document.getElementById('fixedExpenseModal'));
+            alert('Gasto fixo atualizado no mês atual!');
+        } else { // Todos os meses
+            // Remove de todos os meses
+            Object.keys(allMonthsData).forEach(monthKey => {
+                allMonthsData[monthKey].fixedExpenses = allMonthsData[monthKey].fixedExpenses.filter(exp => exp.id !== id);
+            });
+
+            // Atualiza definição mestre
+            masterFixedExpensesDefinitions.set(id, {
+                id,
+                name,
+                date: dateInput, // Mantém a data original para propagação
+                paymentMethodId,
+                categoryId,
+                value
+            });
+
+            saveData();
+            renderCurrentMonthData();
+            closeModal(document.getElementById('fixedExpenseModal'));
+            alert('Gasto fixo atualizado em todos os meses!');
+        }
+    }, 'No mês selecionado', 'Todos os meses');
+}
+    
+    else {
         // Novo gasto fixo
         const newId = generateId();
         currentMonthData.fixedExpenses.push({
