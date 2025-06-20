@@ -1073,8 +1073,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Funções de Manipulação de Dados (Adicionar, Editar, Excluir) ---
-
-document.addEventListener('DOMContentLoaded', () => {
     
 fixedExpenseForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1808,4 +1806,3 @@ fixedExpenseForm.addEventListener('submit', (e) => {
 
     initializeApp();
     });
-}); 
