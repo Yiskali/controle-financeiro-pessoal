@@ -1027,6 +1027,43 @@ document.addEventListener('DOMContentLoaded', () => {
         populateSelect(installmentCategorySelect, categories, 'installments'); // Passando o tipo de array de despesa
     };
 
+    function migrateFixedExpenses() {
+    const sortedMonthKeys = Object.keys(allMonthsData).sort();
+
+    for (let i = 0; i < sortedMonthKeys.length - 1; i++) {
+        const currentKey = sortedMonthKeys[i];
+        const nextKey = sortedMonthKeys[i + 1];
+
+        const currentMonthData = allMonthsData[currentKey];
+        const nextMonthData = allMonthsData[nextKey];
+
+        // Garante que o array exista
+        if (!nextMonthData.fixedExpenses) {
+            nextMonthData.fixedExpenses = [];
+        }
+
+        currentMonthData.fixedExpenses.forEach(exp => {
+            const alreadyExists = nextMonthData.fixedExpenses.some(e => e.id === exp.id);
+
+            if (!alreadyExists) {
+                // Extrai o dia original do gasto
+                const originalDay = new Date(exp.date).getDate();
+                const [year, month] = nextKey.split('-').map(Number);
+                const maxDay = new Date(year, month, 0).getDate();
+                const finalDay = Math.min(originalDay, maxDay);
+
+                const newDate = new Date(year, month - 1, finalDay).toISOString().split('T')[0];
+
+                nextMonthData.fixedExpenses.push({
+                    ...exp,
+                    date: newDate
+                });
+            }
+        });
+    }
+}
+
+    
     const renderCurrentMonthData = () => {
         // Assegura que o currentMonthKey está válido antes de carregar dados
         if (!currentMonthKey || !allMonthsData[currentMonthKey]) {
@@ -1053,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // NOVO: Migra gastos fixos ANTES de renderizar
-        migrateFixedExpenses();
+        migrateFixedExpenses(); 
         // Migra parcelas ANTES de renderizar
         migrateInstallments();
 
