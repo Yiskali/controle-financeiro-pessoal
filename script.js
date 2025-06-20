@@ -1076,89 +1076,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    fixedExpenseForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = document.getElementById('fixedExpenseId').value;
-        const name = document.getElementById('fixedExpenseName').value;
-        const dateInput = document.getElementById('fixedExpenseDate').value;
-        const paymentMethodId = document.getElementById('fixedExpensePaymentMethod').value;
-        const categoryId = document.getElementById('fixedExpenseCategory').value;
-        const value = parseFloat(document.getElementById('fixedExpenseValue').value);
+fixedExpenseForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    // Obter valores do formulário
+    const id = document.getElementById('fixedExpenseId').value;
+    const name = document.getElementById('fixedExpenseName').value.trim();
+    const dateInput = document.getElementById('fixedExpenseDate').value;
+    const paymentMethodId = document.getElementById('fixedExpensePaymentMethod').value;
+    const categoryId = document.getElementById('fixedExpenseCategory').value;
+    const value = parseFloat(document.getElementById('fixedExpenseValue').value);
 
-        const currentMonthData = getCurrentMonthData();
-        const [currentYearSelected, currentMonthSelected] = currentMonthKey.split('-').map(Number);
+    // Validar campos obrigatórios
+    if (!name || !dateInput || !paymentMethodId || !categoryId || isNaN(value) || value <= 0) {
+        alert('Por favor, preencha todos os campos corretamente!');
+        return;
+    }
 
-        const dayOfExpense = new Date(dateInput + 'T12:00:00').getDate();
-        const lastDayOfSelectedMonth = new Date(currentYearSelected, currentMonthSelected, 0).getDate();
-        const effectiveDay = Math.min(dayOfExpense, lastDayOfSelectedMonth);
+    // Processar data
+    const [currentYear, currentMonth] = currentMonthKey.split('-').map(Number);
+    const dayFromInput = new Date(dateInput).getDate();
+    const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const effectiveDay = Math.min(dayFromInput, lastDayOfMonth);
+    const finalDate = new Date(currentYear, currentMonth - 1, effectiveDay).toISOString().split('T')[0];
 
-        const finalDateObj = new Date(currentYearSelected, currentMonthSelected - 1, effectiveDay);
-        const finalDateToSave = finalDateObj.toISOString().split('T')[0];
+    const currentMonthData = getCurrentMonthData();
 
-        if (id) {
-            showConfirmModal('Alterar dado em:', 
-                (response) => {
-                    if (response) { // "No mês selecionado" (primeiro botão)
-                        // Remove o item existente e adiciona a nova versão
-                        currentMonthData.fixedExpenses = currentMonthData.fixedExpenses.filter(exp => exp.id !== id);
-                        
-                        currentMonthData.fixedExpenses.push({
-                            id: id,
-                            name: name,
-                            date: finalDateToSave,
-                            paymentMethodId: paymentMethodId,
-                            categoryId: categoryId,
-                            value: value
-                        });
+    if (id) {
+        // Edição existente
+        showConfirmModal('Alterar gasto fixo em:', (response) => {
+            if (response) { // "No mês selecionado"
+                // Atualiza apenas no mês atual
+                const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
+                if (index !== -1) {
+                    currentMonthData.fixedExpenses[index] = {
+                        id,
+                        name,
+                        date: finalDate,
+                        paymentMethodId,
+                        categoryId,
+                        value
+                    };
+                } else {
+                    currentMonthData.fixedExpenses.push({
+                        id,
+                        name,
+                        date: finalDate,
+                        paymentMethodId,
+                        categoryId,
+                        value
+                    });
+                }
+                
+                saveData();
+                renderCurrentMonthData();
+                closeModal(document.getElementById('fixedExpenseModal'));
+                alert('Gasto fixo atualizado no mês atual!');
+            } else { // "Todos os meses"
+                // Remove de todos os meses
+                Object.keys(allMonthsData).forEach(monthKey => {
+                    allMonthsData[monthKey].fixedExpenses = allMonthsData[monthKey].fixedExpenses.filter(exp => exp.id !== id);
+                });
 
-                        // Ordena por data
-                        currentMonthData.fixedExpenses.sort((a, b) => new Date(a.date) - new Date(b.date));
+                // Atualiza definição mestre
+                masterFixedExpensesDefinitions.set(id, {
+                    id,
+                    name,
+                    date: dateInput, // Mantém a data original para propagação
+                    paymentMethodId,
+                    categoryId,
+                    value
+                });
 
-                        saveData();
-                        renderCurrentMonthData();
-                        closeModal(document.getElementById('fixedExpenseModal'));
-                        alert('Gasto fixo atualizado apenas no mês selecionado.');
-                    } else { // "Todos os meses" (segundo botão)
-                        Object.keys(allMonthsData).forEach(monthKey => {
-                            allMonthsData[monthKey].fixedExpenses = allMonthsData[monthKey].fixedExpenses.filter(exp => exp.id !== id);
-                        });
+                saveData();
+                renderCurrentMonthData();
+                closeModal(document.getElementById('fixedExpenseModal'));
+                alert('Gasto fixo atualizado em todos os meses!');
+            }
+        }, 'No mês selecionado', 'Todos os meses');
+    } else {
+        // Novo gasto fixo
+        const newId = generateId();
+        currentMonthData.fixedExpenses.push({
+            id: newId,
+            name,
+            date: finalDate,
+            paymentMethodId,
+            categoryId,
+            value
+        });
 
-                        masterFixedExpensesDefinitions.set(id, {
-                            id: id,
-                            name: name,
-                            date: dateInput,
-                            paymentMethodId: paymentMethodId, 
-                            categoryId: categoryId, 
-                            value 
-                        });
+        // Adiciona à definição mestre
+        masterFixedExpensesDefinitions.set(newId, {
+            id: newId,
+            name,
+            date: dateInput, // Data original para propagação
+            paymentMethodId,
+            categoryId,
+            value
+        });
 
-                        saveData();
-                        renderCurrentMonthData();
-                        closeModal(document.getElementById('fixedExpenseModal'));
-                        alert('Gasto fixo atualizado em todos os meses subsequentes.');
-                    }
-                },
-                'No mês selecionado', 'Todos os meses'
-            );
-        } else {
-            const newExpense = { id: generateId(), name, date: dateInput, paymentMethodId, categoryId, value };
-            currentMonthData.fixedExpenses.push(newExpense);
-            masterFixedExpensesDefinitions.set(newExpense.id, {
-                id: newExpense.id,
-                name: newExpense.name,
-                date: newExpense.date,
-                paymentMethodId: newExpense.paymentMethodId,
-                categoryId: newExpense.categoryId,
-                value: newExpense.value
-            });
-
-            saveData();
-            renderCurrentMonthData();
-            closeModal(document.getElementById('fixedExpenseModal'));
-            alert('Gasto fixo adicionado com sucesso!');
-        }
-    });
-
+        saveData();
+        renderCurrentMonthData();
+        closeModal(document.getElementById('fixedExpenseModal'));
+        alert('Novo gasto fixo adicionado com sucesso!');
+    }
 });
 
     monthlyExpenseForm.addEventListener('submit', (e) => {
