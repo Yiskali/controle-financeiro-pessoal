@@ -1114,7 +1114,7 @@ if (id) {
                     date: finalDate,
                     paymentMethodId,
                     categoryId,
-                    value: fixedExpenseValue,
+                    value: fixedExpenseValue.value,
                 };
             }
             saveData();
