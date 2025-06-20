@@ -1679,46 +1679,49 @@ const migrateFixedExpenses = () => {
         alert('Dados exportados com sucesso!');
     });
 
-    // --- Importar Dados ---
-    importDataButton.addEventListener('click', () => {
-        importDataInput.click();
-    });
+// --- Importar Dados ---
+    
+importDataButton.addEventListener('click', () => {
+    importDataInput.click();
+});
 
-    importDataInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) {
-            alert('Nenhum arquivo selecionado.');
-            return;
-        }
+importDataInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        alert('Nenhum arquivo selecionado.');
+        return;
+    }
 
-        const reader = new FileReader();
+    const reader = new FileReader();
 
-        reader.onload = (e) => {
-            try {
-                const importedData = JSON.parse(e.target.result);
+    reader.onload = (e) => {
+        try {
+            const importedData = JSON.parse(e.target.result);
 
-                const hasValidStructure = Object.keys(importedData).every(monthKey => {
-                    const monthData = importedData[monthKey];
-                    return typeof monthData === 'object' &&
-                           monthData.hasOwnProperty('fixedExpenses') &&
-                           monthData.hasOwnProperty('monthlyExpenses') &&
-                           monthData.hasOwnProperty('income') &&
-                           monthData.hasOwnProperty('installments') &&
-                           monthData.hasOwnProperty('categories') &&
-                           monthData.hasOwnProperty('paymentMethods');
-                });
+            const hasValidStructure = Object.keys(importedData).every(monthKey => {
+                const monthData = importedData[monthKey];
+                return typeof monthData === 'object' &&
+                    monthData.hasOwnProperty('fixedExpenses') &&
+                    monthData.hasOwnProperty('monthlyExpenses') &&
+                    monthData.hasOwnProperty('income') &&
+                    monthData.hasOwnProperty('installments') &&
+                    monthData.hasOwnProperty('categories') &&
+                    monthData.hasOwnProperty('paymentMethods');
+            });
 
-                if (!hasValidStructure) {
-                    alert('Erro: O arquivo JSON não parece ter a estrutura de dados esperada do seu controle financeiro.');
-                    return;
-                }
+            if (!hasValidStructure) {
+                alert('Erro: O arquivo JSON não parece ter a estrutura de dados esperada do seu controle financeiro.');
+                return;
+            }
 
-                showConfirmModal('Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**', (response) => { // response pode ser true/false
-                    if (response === 'local') { // Se for 'Sim' do genericConfirmModal
+            showConfirmModal(
+                'Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**',
+                (response) => {
+                    if (response === 'local') { // Sim = substituir tudo
                         allMonthsData = importedData;
                         currentMonthKey = Object.keys(allMonthsData).sort()[0];
                         alert('Dados substituídos com sucesso!');
-                    } else if (response === 'global') { // Se for 'Não' do genericConfirmModal
+                    } else if (response === 'global') { // Não = mesclar
                         let newMonthsAdded = 0;
                         let monthsUpdated = 0;
 
@@ -1735,22 +1738,29 @@ const migrateFixedExpenses = () => {
                     }
 
                     saveData();
+
+                    // --- FIX: Rebuild all master definitions and migrate after import ---
+                    // This ensures the UI and all state is in sync with imported data
+                    loadData(); // reloads allMonthsData AND rebuilds masterFixedExpensesDefinitions, etc.
+                    migrateFixedExpenses();
+                    migrateInstallments();
                     updateMonthSelect();
                     renderCurrentMonthData();
-                });
+                }
+            );
 
-            } catch (e) {
-                alert('Erro ao ler o arquivo JSON. Certifique-se de que é um JSON válido: ' + e.message);
-                console.error('Erro ao importar JSON:', e);
-            }
-        };
+        } catch (e) {
+            alert('Erro ao ler o arquivo JSON. Certifique-se de que é um JSON válido: ' + e.message);
+            console.error('Erro ao importar JSON:', e);
+        }
+    };
 
-        reader.onerror = () => {
-            alert('Erro ao ler o arquivo.');
-        };
+    reader.onerror = () => {
+        alert('Erro ao ler o arquivo.');
+    };
 
-        reader.readAsText(file);
-    });
+    reader.readAsText(file);
+});
 
 
     // --- Inicialização da Aplicação ---
