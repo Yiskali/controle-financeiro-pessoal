@@ -1555,7 +1555,6 @@ const migrateFixedExpenses = () => {
         // Optional: sort by date
         monthData.fixedExpenses.sort((a, b) => new Date(a.date + 'T12:00:00') - new Date(b.date + 'T12:00:00'));
     });
-};
 
     console.log("--- DEBUG MIGRATE FIXED EXPENSES END ---");
 };
