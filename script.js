@@ -1107,6 +1107,7 @@ if (id) {
             // Atualiza apenas no mês atual
             const index = currentMonthData.fixedExpenses.findIndex(exp => exp.id === id);
             if (index !== -1) {
+                console.log("Gasto fixo encontrado e atualizado!");
                 currentMonthData.fixedExpenses[index] = {
                     id,
                     name,
