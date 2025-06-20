@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = year;
             selectNewMonthYear.appendChild(option);
         }
-        // Seleciona o ano atual por padrão, a menos que o mês/ano atual do navegador seja mais avançado.
+        // Seleciona o ano actual por padrão, a menos que o mês/ano actual do navegador seja mais avançado.
         selectNewMonthYear.value = new Date().getFullYear();
 
         // Seleciona o próximo mês após o mês atual no navegador (para o caso de adicionar mês futuro)
@@ -775,8 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'fixedExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
-                        <td>${paymentMethodName}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
                         <td>
@@ -788,8 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.date)}</td> <!-- Formata a data para exibição -->
-                        <td>${paymentMethodName}</td>
+                        <td>${formatDisplayDate(item.date)}</td> <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
                         <td>
@@ -801,8 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'installments':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${formatDisplayDate(item.purchaseDate)}</td> <!-- Exibir a purchaseDate -->
-                        <td>${item.currentInstallment}/${item.totalInstallments}</td>
+                        <td>${formatDisplayDate(item.purchaseDate)}</td> <td>${item.currentInstallment}/${item.totalInstallments}</td>
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.valuePerInstallment)}</td>
@@ -1497,14 +1494,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Map para armazenar a DEFINIÇÃO MESTRE de cada gasto fixo
-        // Isso inclui o 'id', 'name', 'paymentMethodId', 'categoryId', 'value', e a 'date' (que é a data original do input)
+        // Esta é a lista global de TODOS os gastos fixos que devem propagar
         const masterFixedExpensesDefinitions = new Map(); 
 
-        // 1. Coletar todas as DEFINIÇÕES MESTRAS de gastos fixos de TODOS OS MESES
+        // 1. Coletar todas as DEFINIÇÕES MESTRAS de gastos fixos de TODOS os meses
+        // Percorremos todos os meses para garantir que cada gasto fixo único seja capturado
+        // com sua última versão (especialmente a 'date' que contém o dia original do usuário).
         Object.values(allMonthsData).forEach(monthData => {
             monthData.fixedExpenses.forEach(fixedExp => {
                 const existingMaster = masterFixedExpensesDefinitions.get(fixedExp.id);
-                // Armazena a versão mais recente do gasto fixo
+                // Guarda a versão mais recente do gasto fixo
                 // A data armazenada aqui é a data ORIGINAL do input do usuário
                 if (!existingMaster || new Date(fixedExp.date + 'T12:00:00') > new Date(existingMaster.date + 'T12:00:00')) {
                     masterFixedExpensesDefinitions.set(fixedExp.id, {
@@ -1513,28 +1512,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         paymentMethodId: fixedExp.paymentMethodId,
                         categoryId: fixedExp.categoryId,
                         value: fixedExp.value,
-                        date: fixedExp.date // A data que o usuário inputou, como base para o dia
+                        date: fixedExp.date // A data que o usuário inputou (YYYY-MM-DD), para extrair o dia
                     });
                 }
             });
         });
-        console.log("Master Fixed Expenses collected:", Array.from(masterFixedExpensesDefinitions.values()));
+        console.log("Master Fixed Expenses collected (from all months):", Array.from(masterFixedExpensesDefinitions.values()));
+
+        // Se não há gastos fixos para propagar, não fazemos nada
+        if (masterFixedExpensesDefinitions.size === 0) {
+            console.log("No fixed expenses to propagate. Exiting migration.");
+            return; // Sai da função se não há nada para propagar
+        }
 
         // 2. Limpar os arrays de fixedExpenses em *todos* os meses antes de repopular
+        // Isso é CRUCIAL para evitar duplicatas e garantir que as listas serão reconstruídas corretamente
         Object.keys(allMonthsData).forEach(monthKey => {
             allMonthsData[monthKey].fixedExpenses = [];
         });
+        console.log("All fixed expenses lists cleared in all months.");
+
 
         // 3. Propagar os gastos fixos mestre para todos os meses
+        // Percorre todos os meses e adiciona (ou recria) as instâncias dos gastos fixos mestre
         for (let i = 0; i < sortedMonths.length; i++) {
-            const monthKey = sortedMonths[i];
-            let monthData = allMonthsData[monthKey];
+            const monthKey = sortedMonths[i]; // Mês atual no loop de propagação
+            let monthData = allMonthsData[monthKey]; // Objeto de dados para este mês
             
-            console.log(`Processing month for propagation: ${monthKey}`);
+            console.log(`Propagating to month: ${monthKey}`);
 
             masterFixedExpensesDefinitions.forEach(masterFixedExp => {
-                // Constrói a data para o Gasto Fixo neste mês de propagação
-                // Usa o ANO/MÊS do 'monthKey' atual do loop e o DIA da 'date' da definição mestre.
+                // Constrói a data para este gasto fixo no contexto do 'monthKey' atual
                 const [loopYear, loopMonth] = monthKey.split('-').map(Number);
                 const dayFromMaster = new Date(masterFixedExp.date + 'T12:00:00').getDate(); // Pega o dia da data da definição mestre
 
@@ -1544,9 +1552,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newDateForLoopMonthObj = new Date(loopYear, loopMonth - 1, effectiveDayForLoopMonth);
                 const formattedDateForLoopMonth = newDateForLoopMonthObj.toISOString().split('T')[0];
 
-                console.log(`  - Propagating fixed expense ID ${masterFixedExp.id} to ${monthKey}. Calculated date: ${formattedDateForLoopMonth}`);
+                console.log(`  - Adding/Updating fixed expense ID ${masterFixedExp.id}. Date: ${formattedDateForLoopMonth}`);
 
-                // Adiciona a nova instância do gasto fixo com a data corrigida para este mês
                 monthData.fixedExpenses.push({
                     id: masterFixedExp.id, // Mantém o ID original
                     name: masterFixedExp.name,
@@ -1555,8 +1562,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     categoryId: masterFixedExp.categoryId,
                     value: masterFixedExp.value
                 });
-                console.log(`    -> Added item to ${monthKey}.`);
             });
+            // Opcional: Ordenar os gastos fixos dentro de cada mês se desejado
+            monthData.fixedExpenses.sort((a, b) => new Date(a.date + 'T12:00:00') - new Date(b.date + 'T12:00:00'));
         }
         console.log("--- DEBUG MIGRATE FIXED EXPENSES END ---");
     };
@@ -1565,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const masterInstallmentDefinitions = new Map();
 
         // 1. Coleta e Padroniza as Definições Mestras de todas as parcelas
-        // Agora o 'originalDate' na definição mestra será o 'seriesStartDate'
         Object.values(allMonthsData).forEach(monthData => {
             monthData.installments.forEach(inst => {
                 const existingMaster = masterInstallmentDefinitions.get(inst.id);
@@ -1644,7 +1651,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         Object.keys(allMonthsData).forEach(monthKey => {
-            allMonthsData[monthKey].installments.sort((a, b) => new Date(a.currentDate) - new Date(b.currentDate));
+            allMonthsData[monthKey].installments.sort((a, b) => new Date(a.currentDate + 'T12:00:00') - new Date(b.currentDate + 'T12:00:00'));
         });
 
         saveData();
@@ -1760,8 +1767,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const initializeApp = () => {
         loadData();
-        // Chamadas AGORA aqui E em renderCurrentMonthData
-        migrateFixedExpenses();
+        // NOVO: Chamada para migrateFixedExpenses() aqui na inicialização
+        migrateFixedExpenses(); 
         migrateInstallments();
         updateMonthSelect();
         renderCurrentMonthData();
