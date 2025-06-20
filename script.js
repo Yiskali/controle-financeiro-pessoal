@@ -1026,6 +1026,35 @@ document.addEventListener('DOMContentLoaded', () => {
         populateSelect(installmentPaymentMethodSelect, paymentMethods, 'paymentMethod');
         populateSelect(installmentCategorySelect, categories, 'installments'); // Passando o tipo de array de despesa
     };
+
+    function migrateFixedExpenses() {
+    const sortedMonthKeys = Object.keys(allMonthsData).sort();
+
+    for (let i = 0; i < sortedMonthKeys.length - 1; i++) {
+        const currentKey = sortedMonthKeys[i];
+        const nextKey = sortedMonthKeys[i + 1];
+
+        const currentMonthData = allMonthsData[currentKey];
+        const nextMonthData = allMonthsData[nextKey];
+
+        if (!nextMonthData.fixedExpenses) {
+            nextMonthData.fixedExpenses = [];
+        }
+
+        currentMonthData.fixedExpenses.forEach(exp => {
+            const exists = nextMonthData.fixedExpenses.some(e => e.id === exp.id);
+            if (!exists) {
+                const originalDay = new Date(exp.date).getDate();
+                const [year, month] = nextKey.split('-').map(Number);
+                const maxDay = new Date(year, month, 0).getDate();
+                const finalDay = Math.min(originalDay, maxDay);
+                const newDate = new Date(year, month - 1, finalDay).toISOString().split('T')[0];
+
+                nextMonthData.fixedExpenses.push({ ...exp, date: newDate });
+            }
+        });
+    }
+}
     
     const renderCurrentMonthData = () => {
         // Assegura que o currentMonthKey está válido antes de carregar dados
