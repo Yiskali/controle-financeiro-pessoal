@@ -1807,4 +1807,3 @@ fixedExpenseForm.addEventListener('submit', (e) => {
     };
 
     initializeApp();
-});
