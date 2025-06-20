@@ -1134,7 +1134,7 @@ if (id) {
                 date: dateInput, // Mantém a data original para propagação
                 paymentMethodId,
                 categoryId,
-                value
+                value: fixedExpenseValue.value,
             });
 
             saveData();
