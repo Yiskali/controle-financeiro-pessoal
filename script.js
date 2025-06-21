@@ -1680,7 +1680,7 @@ const migrateFixedExpenses = () => {
     });
 
 // --- Importar Dados ---
-    
+
 importDataButton.addEventListener('click', () => {
     importDataInput.click();
 });
@@ -1715,18 +1715,22 @@ importDataInput.addEventListener('change', (event) => {
             }
 
             showConfirmModal(
-                'Deseja **substituir** os dados existentes pelos dados importados ou **mesclá-los** (adicionar meses novos)?\n\n**"Sim" = Substituir (APAGA OS ATUAIS)**\n**"Não" = Mesclar (MANTÉM ATUAIS E ADICIONA NOVOS MESES)**',
+                'O que você deseja fazer com os dados importados?\n\n' +
+                '👉 **Substituir**: Apaga TODOS os dados atuais e carrega APENAS os dados do arquivo importado.\n' +
+                '👉 **Mesclar**: Mantém os dados atuais e adiciona os dados do arquivo, como novos meses ou entradas novas.\n\n' +
+                'Esta ação não pode ser desfeita.',
                 (response) => {
-                    if (response === 'local') { // Sim = substituir tudo
+                    if (response === 'local') { // "Substituir"
                         allMonthsData = importedData;
                         currentMonthKey = Object.keys(allMonthsData).sort()[0];
                         alert('Dados substituídos com sucesso!');
-                    } else if (response === 'global') { // Não = mesclar
+                    } else if (response === 'global') { // "Mesclar"
                         let newMonthsAdded = 0;
                         let monthsUpdated = 0;
 
                         for (const monthKey in importedData) {
                             if (allMonthsData.hasOwnProperty(monthKey)) {
+                                // Merge logic: here, you can choose to update or skip existing months. We'll update.
                                 allMonthsData[monthKey] = importedData[monthKey];
                                 monthsUpdated++;
                             } else {
@@ -1739,14 +1743,14 @@ importDataInput.addEventListener('change', (event) => {
 
                     saveData();
 
-                    // --- FIX: Rebuild all master definitions and migrate after import ---
-                    // This ensures the UI and all state is in sync with imported data
-                    loadData(); // reloads allMonthsData AND rebuilds masterFixedExpensesDefinitions, etc.
+                    // Rebuild all master definitions and migrate after import to ensure UI consistency
+                    loadData();
                     migrateFixedExpenses();
                     migrateInstallments();
                     updateMonthSelect();
                     renderCurrentMonthData();
-                }
+                },
+                'Substituir', 'Mesclar' // Properly labeled buttons
             );
 
         } catch (e) {
@@ -1761,7 +1765,6 @@ importDataInput.addEventListener('change', (event) => {
 
     reader.readAsText(file);
 });
-
 
     // --- Inicialização da Aplicação ---
 
