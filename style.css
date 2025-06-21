@@ -41,7 +41,7 @@
 body {
     font-family: 'Rajdhani', sans-serif;
     background-color: var(--header-bg-color);
-    color: var(--dark-text); /* Cor do texto principal (cinza claríssimo) */
+    color: var(--text-color-title); /* Cor do texto principal (marrom escuro) */
     line-height: 1.6;
 }
 
