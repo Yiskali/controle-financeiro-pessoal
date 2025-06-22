@@ -783,6 +783,8 @@ currentVoucherBalanceSummary.className = (totalVoucherEntries - totalSpentVouche
 renderCategorySummary();
 renderPaymentMethodSummary();
         
+};
+        
 
     const renderTable = (data, tableBody, type) => {
         tableBody.innerHTML = '';
