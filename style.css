@@ -75,6 +75,7 @@ body {
     color: var(--light-text);
     cursor: pointer;
     font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
     font-size: 1rem;
     transition: background-color 0.3s ease;
 }
@@ -106,6 +107,7 @@ body {
     color: var(--dark-text); /* Texto das abas não ativas (cinza claríssimo) */
     cursor: pointer;
     font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
     font-size: 1rem;
     transition: background-color 0.3s ease, color 0.3s ease;
     border-radius: 5px;
