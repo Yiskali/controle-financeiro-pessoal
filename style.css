@@ -43,6 +43,7 @@ body {
     background-color: var(--header-bg-color);
     color: var(--text-color-title); /* Cor do texto principal (marrom escuro) */
     line-height: 1.6;
+    font-weight: 600;
 }
 
 .header {
