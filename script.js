@@ -729,51 +729,59 @@ document.addEventListener('DOMContentLoaded', () => {
         currentBalanceSummary.textContent = formatCurrency(currentBalance);
         currentBalanceSummary.className = currentBalance >= 0 ? 'balance-positive' : 'balance-negative';
 
-        // --- CÁLCULOS DOS NOVOS CARDS ---
-        let totalSpentRegular = 0;
-        let totalSpentVouchers = 0;
-        let totalInitialVoucherBalance = 0; // Soma dos saldos iniciais de todas as formas de pagamento 'vale'
-        let totalInitialRegularIncome = totalIncome; // Saldo inicial regular é o total de entradas (salário)
+    // --- CÁLCULOS DOS NOVOS CARDS ---
 
-        // Coleta o saldo inicial de todas as formas de pagamento que são vales
-        const paymentMethods = getCurrentMonthData().paymentMethods;
-        paymentMethods.forEach(pm => {
-            if (pm.isVoucher) {
-                totalInitialVoucherBalance += pm.initialBalance || 0;
-            }
-        });
+// Calculate total voucher ("vale") entries (all initial balances of voucher payment methods)
+let totalVoucherEntries = 0;
+const paymentMethods = currentMonthData.paymentMethods;
+paymentMethods.forEach(pm => {
+    if (pm.isVoucher) {
+        totalVoucherEntries += pm.initialBalance || 0;
+    }
+});
 
-        const allExpenses = [
-            ...currentMonthData.fixedExpenses,
-            ...currentMonthData.monthlyExpenses,
-            ...currentMonthData.installments.filter(inst => inst.status === 'Ativa')
-        ];
+// Calculate total salary/income entries (all values in 'income' array)
+let totalIncomeEntries = currentMonthData.income.reduce((sum, item) => sum + (item.value || 0), 0);
 
-        allExpenses.forEach(exp => {
-            const paymentMethod = paymentMethods.find(pm => pm.id === exp.paymentMethodId);
-            if (paymentMethod && paymentMethod.isVoucher) {
-                totalSpentVouchers += exp.value || exp.valuePerInstallment;
-            } else {
-                totalSpentRegular += exp.value || exp.valuePerInstallment;
-            }
-        });
+// Calculate expenses by payment method type
+let totalSpentRegular = 0;
+let totalSpentVouchers = 0;
 
-        // Cálculos dos Saldos
-        let currentVoucherBalance = totalInitialVoucherBalance - totalSpentVouchers;
-        let currentRegularBalance = totalInitialRegularIncome - totalSpentRegular; // Saldo Regular = Entradas (salário) - Gastos Regulares
+const allExpenses = [
+    ...currentMonthData.fixedExpenses,
+    ...currentMonthData.monthlyExpenses,
+    ...currentMonthData.installments.filter(inst => inst.status === 'Ativa')
+];
 
-        // ATUALIZAÇÃO DOS CARDS
-        totalSpentRegularSummary.textContent = formatCurrency(totalSpentRegular);
-        currentRegularBalanceSummary.textContent = formatCurrency(currentRegularBalance);
-        currentRegularBalanceSummary.className = currentRegularBalance >= 0 ? 'balance-positive' : 'balance-negative';
+allExpenses.forEach(exp => {
+    const paymentMethod = paymentMethods.find(pm => pm.id === exp.paymentMethodId);
+    if (paymentMethod && paymentMethod.isVoucher) {
+        totalSpentVouchers += exp.value || exp.valuePerInstallment;
+    } else {
+        totalSpentRegular += exp.value || exp.valuePerInstallment;
+    }
+});
 
-        totalSpentVouchersSummary.textContent = formatCurrency(totalSpentVouchers);
-        currentVoucherBalanceSummary.textContent = formatCurrency(currentVoucherBalance);
-        currentVoucherBalanceSummary.className = currentVoucherBalance >= 0 ? 'balance-positive' : 'balance-negative';
+// FINAL: Use corrected logic for summary cards
+let totalEntradas = totalVoucherEntries + totalIncomeEntries;
+let totalSaidas = totalSpentRegular + totalSpentVouchers;
 
-        renderCategorySummary();
-        renderPaymentMethodSummary();
-    };
+totalIncomeSummary.textContent = formatCurrency(totalEntradas);
+totalExpensesSummary.textContent = formatCurrency(totalSaidas);
+currentBalanceSummary.textContent = formatCurrency(totalEntradas - totalSaidas);
+currentBalanceSummary.className = (totalEntradas - totalSaidas) >= 0 ? 'balance-positive' : 'balance-negative';
+
+// Update secondary cards as before
+totalSpentRegularSummary.textContent = formatCurrency(totalSpentRegular);
+currentRegularBalanceSummary.textContent = formatCurrency(totalIncomeEntries - totalSpentRegular);
+currentRegularBalanceSummary.className = (totalIncomeEntries - totalSpentRegular) >= 0 ? 'balance-positive' : 'balance-negative';
+
+totalSpentVouchersSummary.textContent = formatCurrency(totalSpentVouchers);
+currentVoucherBalanceSummary.textContent = formatCurrency(totalVoucherEntries - totalSpentVouchers);
+currentVoucherBalanceSummary.className = (totalVoucherEntries - totalSpentVouchers) >= 0 ? 'balance-positive' : 'balance-negative';
+
+renderCategorySummary();
+renderPaymentMethodSummary();
 
     const renderTable = (data, tableBody, type) => {
         tableBody.innerHTML = '';
