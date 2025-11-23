@@ -820,7 +820,7 @@ renderPaymentMethodSummary();
                 case 'monthlyExpenses':
                     row.innerHTML = `
                         <td>${item.name}</td>
-                        <td>${item.date}</td>
+                        <td>${formatDisplayDate(item.date)}</td>   <!-- <-- usar formatDisplayDate para consistência -->
                         <td>${paymentMethodName}</td>
                         <td>${categoryName}</td>
                         <td>${formatCurrency(item.value)}</td>
@@ -1808,3 +1808,4 @@ importDataInput.addEventListener('change', (event) => {
 
     initializeApp();
 });
+
