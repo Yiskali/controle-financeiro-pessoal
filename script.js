@@ -1708,6 +1708,42 @@ const migrateFixedExpenses = () => {
 
 // --- Importar Dados ---
 
+function normalizeDatesInImportedData(data) {
+  for (const monthKey in data) {
+    const m = data[monthKey];
+    const normalize = (obj, keys) => {
+      keys.forEach(k => {
+        if (!obj) return;
+        if (Array.isArray(obj)) {
+          obj.forEach(item => normalize(item, keys));
+          return;
+        }
+      });
+    };
+    // fixedExpenses, monthlyExpenses: campo 'date'
+    (m.fixedExpenses || []).forEach(exp => {
+      if (exp.date && /^\d{2}\/\d{2}\/\d{4}$/.test(exp.date)) {
+        const [d, mo, y] = exp.date.split('/');
+        exp.date = `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      }
+    });
+    (m.monthlyExpenses || []).forEach(exp => {
+      if (exp.date && /^\d{2}\/\d{2}\/\d{4}$/.test(exp.date)) {
+        const [d, mo, y] = exp.date.split('/');
+        exp.date = `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      }
+    });
+    (m.installments || []).forEach(inst => {
+      ['purchaseDate','originalDate','currentDate'].forEach(fld => {
+        if (inst[fld] && /^\d{2}\/\d{2}\/\d{4}$/.test(inst[fld])) {
+          const [d, mo, y] = inst[fld].split('/');
+          inst[fld] = `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+        }
+      });
+    });
+  }
+}
+    
 importDataButton.addEventListener('click', () => {
     importDataInput.click();
 });
@@ -1724,6 +1760,8 @@ importDataInput.addEventListener('change', (event) => {
     reader.onload = (e) => {
         try {
             const importedData = JSON.parse(e.target.result);
+
+ // normalizeDatesInImportedData(importedData);
 
             const hasValidStructure = Object.keys(importedData).every(monthKey => {
                 const monthData = importedData[monthKey];
@@ -1808,4 +1846,5 @@ importDataInput.addEventListener('change', (event) => {
 
     initializeApp();
 });
+
 
