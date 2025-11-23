@@ -610,3 +610,7 @@ table td button:hover {
         padding: 20px;
     }
 }
+
+thead th { cursor: pointer; user-select: none; }
+thead th.sort-asc::after { content: ' ▲'; font-size: 0.9em; }
+thead th.sort-desc::after { content: ' ▼'; font-size: 0.9em; }
